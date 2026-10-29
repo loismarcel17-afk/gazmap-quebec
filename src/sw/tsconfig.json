@@ -1,0 +1,16 @@
+{
+  // The service worker runs in a worker, not a page: its own type check
+  // ("webworker" instead of "dom"). Run with: npm run typecheck
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["esnext", "webworker"],
+    "types": [],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "isolatedModules": true
+  },
+  "include": ["sw.ts"]
+}

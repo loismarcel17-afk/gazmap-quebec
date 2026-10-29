@@ -1,0 +1,416 @@
+{
+  "app": {
+    "name": "GazMap Québec",
+    "description": "Le prix de l'essence dans toutes les stations du Québec, sur une carte.",
+    "shortName": "GazMap"
+  },
+  "storageNotice": {
+    "label": "Témoins et stockage",
+    "text": "Aucun témoin publicitaire ni outil de mesure d'audience. Ce site garde seulement sur votre appareil ce qui le fait fonctionner : votre véhicule, votre session si vous avez un compte et le trajet en cours.",
+    "more": "En savoir plus",
+    "ok": "Compris"
+  },
+  "legalLinks": {
+    "label": "Informations légales",
+    "privacy": "Confidentialité",
+    "terms": "Conditions d'utilisation"
+  },
+  "offline": {
+    "title": "Vous êtes hors ligne",
+    "text": "Les prix de l'essence changent souvent : il faut une connexion pour les afficher. Vérifiez votre réseau, puis réessayez.",
+    "retry": "Réessayer",
+    "banner": "Hors ligne : les prix et les itinéraires ne peuvent pas être mis à jour."
+  },
+  "fuel": {
+    "label": "Carburant",
+    "regular": "Ordinaire",
+    "premium": "Super",
+    "diesel": "Diesel"
+  },
+  "map": {
+    "label": "Carte des stations d'essence",
+    "source": "Source : Régie de l'énergie",
+    "updatedAt": "Prix du {date}",
+    "loading": "Chargement des stations…",
+    "error": "Impossible de charger les stations. Vérifiez votre connexion puis réessayez.",
+    "retry": "Réessayer",
+    "stationCount": {
+      "one": "{count} station affichée",
+      "other": "{count} stations affichées"
+    },
+    "empty": "Aucun prix pour l'instant. Les données de la Régie arrivent dans quelques minutes."
+  },
+  "legend": {
+    "title": "Prix comparé aux autres stations",
+    "cheaper": "Moins cher",
+    "pricier": "Plus cher"
+  },
+  "search": {
+    "label": "Ville ou code postal",
+    "placeholder": "Ville ou code postal",
+    "suggestions": "Suggestions",
+    "noResult": "Aucune ville ni code postal trouvé",
+    "clear": "Effacer la recherche",
+    "locate": "Me localiser",
+    "locating": "Localisation en cours…",
+    "myPosition": "Ma position",
+    "privacy": "Votre position sert seulement à calculer les trajets ; elle n'est jamais enregistrée.",
+    "stationCount": {
+      "one": "{count} station",
+      "other": "{count} stations"
+    },
+    "errors": {
+      "denied": "Localisation refusée. Entrez plutôt une ville ou un code postal.",
+      "unavailable": "Position introuvable. Entrez plutôt une ville ou un code postal.",
+      "unsupported": "Votre navigateur ne permet pas la localisation. Entrez une ville ou un code postal."
+    }
+  },
+  "nearby": {
+    "title": "Près de {place}",
+    "summary": {
+      "one": "{count} station à moins de {radius} km",
+      "other": "{count} stations à moins de {radius} km, classées par coût total du plein"
+    },
+    "radius": "Rayon de recherche",
+    "radiusOption": "{radius} km",
+    "distance": "à {distance}",
+    "empty": "Aucune station ne vend ce carburant à moins de {radius} km.",
+    "widen": "Chercher à {radius} km",
+    "truncated": "Les {count} moins chères sont affichées.",
+    "titleNearYou": "Près de vous",
+    "best": "Meilleur choix",
+    "sponsored": "Commanditée",
+    "fillUpCost": "Coût du plein",
+    "breakdown": "{litres} L à {price} + détour {detour} ({distance} aller-retour)",
+    "savings": "{amount} de moins qu'à la station la moins chère au litre ({price}, à {distance})",
+    "assumptions": "Plein de {litres} L à {consumption} L/100 km.",
+    "assumptionsDefault": "Estimation pour un plein de 40 L à 9,5 L/100 km.",
+    "addVehicle": "Ajouter mon véhicule pour un calcul précis",
+    "detour": {
+      "road": "Détours calculés par la route.",
+      "estimated": "Détours calculés par la route, estimés pour les stations plus éloignées.",
+      "straightLine": "Détours estimés à vol d'oiseau."
+    }
+  },
+  "station": {
+    "unnamed": "Station sans nom",
+    "independent": "Indépendant",
+    "notAvailable": "Non disponible",
+    "close": "Fermer la fiche de la station",
+    "prices": "Prix au litre",
+    "go": "Y aller"
+  },
+  "vehicle": {
+    "title": "Mon véhicule",
+    "intro": "Votre véhicule sert à estimer le coût de votre plein, détour compris. Il reste enregistré sur cet appareil seulement, sans compte.",
+    "backToMap": "Retour à la carte",
+    "chooseModel": "Modèle",
+    "year": "Année",
+    "make": "Marque",
+    "model": "Modèle",
+    "variant": "Version",
+    "choose": "Choisir…",
+    "loading": "Chargement…",
+    "loadError": "Impossible de charger les modèles. Vérifiez votre connexion puis réessayez.",
+    "variantLabel": "{engine} L · {transmission} · {fuel} · {consumption} L/100 km",
+    "summary": "{consumption} L/100 km en conduite combinée",
+    "recommendedFuel": "Carburant indiqué par RNCan : {fuel}",
+    "fuelCodes": {
+      "X": "ordinaire",
+      "Z": "super",
+      "D": "diesel"
+    },
+    "tank": "Capacité du réservoir",
+    "tankHint": "En litres, voir le manuel du propriétaire. Facultatif : sinon, on estime un plein de 40 L.",
+    "tankUnit": "L",
+    "tankInvalid": "Entrez une capacité entre {min} et {max} L.",
+    "level": "Niveau actuel",
+    "levelUnknown": "Je ne sais pas",
+    "levels": {
+      "0": "Vide",
+      "0.25": "1/4",
+      "0.5": "1/2",
+      "0.75": "3/4"
+    },
+    "estimate": "Plein estimé : {litres} L",
+    "remove": "Retirer mon véhicule",
+    "chip": "{make} {model} {year} · {consumption} L/100 km",
+    "chipEmpty": "Ajouter mon véhicule (facultatif)",
+    "attribution": "Source : Ressources naturelles Canada, Cotes de consommation de carburant. Contient des informations visées par la Licence du gouvernement ouvert – Canada.",
+    "licence": "Licence du gouvernement ouvert – Canada"
+  },
+  "navigation": {
+    "title": "Trajet vers {station}",
+    "loading": "Chargement du trajet…",
+    "notFound": "Cette station est introuvable.",
+    "safety": {
+      "title": "Avant de partir",
+      "screen": "Gardez l'écran allumé et le site ouvert pendant le trajet.",
+      "phone": "Ne manipulez pas votre téléphone en conduisant (Code de la sécurité routière) : installez-le sur un support avant de partir.",
+      "start": "Démarrer le guidage",
+      "resume": "Reprendre le guidage"
+    },
+    "status": {
+      "locating": "Recherche de votre position…",
+      "routing": "Calcul de l'itinéraire…",
+      "rerouting": "Recalcul de l'itinéraire…",
+      "weakGps": "Signal GPS faible",
+      "wakeLockRefused": "L'écran pourrait se mettre en veille : gardez-le allumé."
+    },
+    "remaining": "Temps restant",
+    "distanceLeft": "Distance restante",
+    "arrival": "Arrivée",
+    "mute": "Couper la voix",
+    "unmute": "Activer la voix",
+    "stop": "Arrêter",
+    "openIn": "Ouvrir dans {app}",
+    "apps": {
+      "waze": "Waze",
+      "google": "Google Maps",
+      "apple": "Plans"
+    },
+    "started": "Guidage démarré.",
+    "fallback": {
+      "unsupported": "Votre navigateur ne permet pas le guidage dans le site.",
+      "denied": "La localisation est refusée : le guidage dans le site en a besoin.",
+      "unavailable": "Le guidage dans le site n'est pas disponible pour l'instant.",
+      "expired": "Le guidage s'est arrêté après 2 heures.",
+      "useApp": "Ouvrez le trajet dans votre application de navigation :"
+    },
+    "icons": {
+      "straight": "Tout droit",
+      "slight-left": "Légèrement à gauche",
+      "left": "À gauche",
+      "sharp-left": "Fortement à gauche",
+      "slight-right": "Légèrement à droite",
+      "right": "À droite",
+      "sharp-right": "Fortement à droite",
+      "uturn": "Demi-tour",
+      "roundabout": "Rond-point",
+      "arrive": "Arrivée"
+    }
+  },
+  "feedback": {
+    "arrived": "Après le plein",
+    "question": "Avez-vous fait le plein chez {station} ?",
+    "yes": "Oui",
+    "no": "Pas cette fois",
+    "thanks": "Merci !",
+    "backToMap": "Retour à la carte",
+    "fuel": "Carburant acheté",
+    "price": "Prix payé au litre",
+    "priceUnit": "¢/L",
+    "priceHint": "Le prix affiché par la Régie est prérempli : corrigez-le s'il était différent à la pompe.",
+    "priceInvalid": "Entrez le prix au litre, par exemple 185,9.",
+    "confirm": "Confirmer",
+    "sameAsDisplayed": "C'est le bon prix ({price})",
+    "saving": "Enregistrement…",
+    "error": "Impossible d'enregistrer votre réponse. Réessayez.",
+    "thanksYes": "Votre prix confirmé aide à vérifier les prix affichés.",
+    "thanksNo": "Bonne route !",
+    "accountInvite": "Créez un compte pour confirmer les prix que vous payez et aider les autres conducteurs.",
+    "accountLink": "Créer un compte",
+    "alreadyAnswered": "Merci, votre réponse pour ce trajet est déjà enregistrée.",
+    "prompt": "Avez-vous fait le plein chez {station} ?",
+    "promptYes": "Oui, confirmer le prix",
+    "promptNo": "Pas cette fois",
+    "promptDismiss": "Masquer"
+  },
+  "account": {
+    "title": "Mon compte",
+    "chip": "Mon compte",
+    "chipSignedOut": "Se connecter",
+    "backToMap": "Retour à la carte",
+    "loading": "Chargement…",
+    "why": "Sans compte, la carte et les recommandations fonctionnent déjà. Un compte sert à synchroniser votre véhicule, à suivre vos trajets et à confirmer les prix payés.",
+    "signIn": {
+      "title": "Connexion",
+      "email": "Adresse courriel",
+      "emailInvalid": "Entrez une adresse courriel valide.",
+      "send": "Recevoir un code",
+      "sending": "Envoi…",
+      "codeSent": "Un code à 6 chiffres a été envoyé à {email}. Il est valide 10 minutes.",
+      "code": "Code reçu par courriel",
+      "codeInvalidFormat": "Le code contient 6 chiffres.",
+      "verify": "Se connecter",
+      "verifying": "Vérification…",
+      "otherEmail": "Utiliser une autre adresse",
+      "resend": "Renvoyer un code",
+      "errors": {
+        "rateLimited": "Trop de demandes. Patientez quelques minutes avant de réessayer.",
+        "invalidCode": "Ce code est incorrect ou expiré. Vérifiez-le ou demandez-en un nouveau.",
+        "captcha": "La vérification anti-robot n'a pas abouti. Vérifiez votre connexion, rechargez la page et réessayez.",
+        "unavailable": "Connexion impossible pour l'instant. Réessayez plus tard."
+      }
+    },
+    "consent": {
+      "title": "Avant de continuer",
+      "terms": "J'accepte les {link}.",
+      "termsLink": "conditions d'utilisation",
+      "termsRequired": "Vous devez accepter les conditions d'utilisation pour créer un compte.",
+      "statistics": "Contribuer anonymement aux statistiques",
+      "statisticsHelp": "Facultatif. Les prix que vous confirmez et vos trajets (région de la station, mois, plein fait ou non) servent, une fois regroupés avec ceux d'au moins 20 personnes, à des statistiques sur le prix de l'essence. Jamais vos données individuelles. Vous pourrez changer d'avis à tout moment.",
+      "privacy": "Voir la {link}.",
+      "privacyLink": "politique de confidentialité",
+      "continue": "Continuer",
+      "saving": "Enregistrement…",
+      "error": "Impossible d'enregistrer votre choix. Réessayez.",
+      "decline": "Ne pas créer de compte",
+      "declineError": "Impossible d'annuler la création du compte pour l'instant. Réessayez."
+    },
+    "settings": {
+      "signedInAs": "Connecté avec {email}",
+      "consentsTitle": "Consentements",
+      "termsAccepted": "Conditions d'utilisation acceptées le {date}.",
+      "statistics": "Contribuer anonymement aux statistiques",
+      "statisticsOn": "Activé depuis le {date}.",
+      "statisticsOff": "Désactivé.",
+      "statisticsOffSince": "Désactivé depuis le {date}.",
+      "statisticsError": "Impossible d'enregistrer ce changement. Réessayez.",
+      "signOut": "Se déconnecter",
+      "deleteTitle": "Supprimer mon compte",
+      "deleteIntro": "Votre adresse courriel, vos consentements, vos trajets et vos prix confirmés seront effacés définitivement.",
+      "delete": "Supprimer mon compte…",
+      "deleteConfirmTitle": "Supprimer votre compte ?",
+      "deleteConfirmText": "Cette action est immédiate et irréversible. Le profil de véhicule enregistré sur cet appareil est conservé ; vous pouvez le modifier sans compte.",
+      "deleteConfirm": "Supprimer définitivement",
+      "deleteCancel": "Annuler",
+      "deleting": "Suppression…",
+      "deleteError": "Impossible de supprimer votre compte pour l'instant. Rien n'a été effacé ; réessayez.",
+      "deleted": "Votre compte et toutes vos données ont été supprimés."
+    }
+  },
+  "legal": {
+    "draft": "Brouillon : ce texte est provisoire et doit être validé par un juriste avant la mise en ligne.",
+    "terms": {
+      "title": "Conditions d'utilisation",
+      "sections": [
+        {
+          "title": "Le service",
+          "paragraphs": [
+            "GazMap Québec affiche les prix de l'essence publiés par la Régie de l'énergie et estime le coût total d'un plein, détour compris. Le service est gratuit."
+          ]
+        },
+        {
+          "title": "Exactitude des informations",
+          "paragraphs": [
+            "Les prix sont déclarés par les stations et publiés par la Régie de l'énergie ; ils peuvent changer à tout moment. Les coûts de plein, détours, durées et consommations sont des estimations fournies à titre indicatif."
+          ]
+        },
+        {
+          "title": "Sécurité routière",
+          "paragraphs": [
+            "Ne manipulez pas votre téléphone en conduisant (Code de la sécurité routière). Le guidage est indicatif : respectez toujours la signalisation et les conditions de la route."
+          ]
+        },
+        {
+          "title": "Compte",
+          "paragraphs": [
+            "Un compte est facultatif. Il est lié à votre adresse courriel. Vous pouvez le supprimer à tout moment, avec toutes vos données personnelles."
+          ]
+        },
+        {
+          "title": "Vos contributions",
+          "paragraphs": [
+            "Si vous y consentez, les prix que vous confirmez et vos trajets (région de la station, mois, plein fait ou non) peuvent servir, une fois regroupés avec ceux d'au moins 20 personnes, à des statistiques sur le prix de l'essence. Vos données individuelles ne sont jamais communiquées."
+          ]
+        },
+        {
+          "title": "Sources",
+          "paragraphs": [
+            "Prix : Régie de l'énergie. Cotes de consommation : Ressources naturelles Canada, sous la Licence du gouvernement ouvert – Canada. Cartes : OpenStreetMap et OpenFreeMap. Itinéraires : Mapbox."
+          ]
+        },
+        {
+          "title": "Modifications",
+          "paragraphs": [
+            "Une nouvelle version de ces conditions vous sera présentée et devra être acceptée avant de continuer à utiliser votre compte."
+          ]
+        },
+        {
+          "title": "Nous joindre",
+          "paragraphs": [
+            "Pour toute question sur ces conditions : makinetworksservices@gmail.com."
+          ]
+        }
+      ]
+    },
+    "privacy": {
+      "title": "Politique de confidentialité",
+      "sections": [
+        {
+          "title": "Responsable",
+          "paragraphs": [
+            "Responsable de la protection des renseignements personnels : Lois Marcel. Pour exercer vos droits ou poser une question sur vos renseignements personnels, écrivez à makinetworksservices@gmail.com."
+          ]
+        },
+        {
+          "title": "Sans compte",
+          "paragraphs": [
+            "Votre position sert seulement à calculer les distances et les trajets. Elle est envoyée à notre serveur, puis à Mapbox pour le calcul des itinéraires, sans être enregistrée ni associée à votre identité. Pendant un guidage, seules la position de départ et celle d'un recalcul sont envoyées.",
+            "Votre véhicule (modèle, réservoir, niveau) est enregistré sur votre appareil seulement."
+          ]
+        },
+        {
+          "title": "Avec un compte",
+          "paragraphs": [
+            "Nous conservons votre adresse courriel et l'historique horodaté de vos consentements (conditions d'utilisation, statistiques)."
+          ]
+        },
+        {
+          "title": "Statistiques",
+          "paragraphs": [
+            "Seulement si vous y consentez : consentement facultatif, décoché par défaut et retirable à tout moment dans les réglages de votre compte. Les statistiques regroupent au moins 20 personnes par zone et par période ; elles ne contiennent jamais vos données individuelles."
+          ]
+        },
+        {
+          "title": "Conservation",
+          "paragraphs": [
+            "Aucune position de trajet n'est conservée. Votre compte et ses données sont conservés jusqu'à ce que vous le supprimiez ; la suppression est immédiate et efface aussi votre adresse courriel de nos journaux de connexion. Une adresse saisie sans que les conditions soient acceptées est effacée après 30 jours."
+          ]
+        },
+        {
+          "title": "Hébergement",
+          "paragraphs": [
+            "Les données des comptes sont hébergées au Canada."
+          ]
+        },
+        {
+          "title": "Vos droits",
+          "paragraphs": [
+            "Vous pouvez accéder à vos renseignements, les faire corriger, retirer un consentement et supprimer votre compte. Vous pouvez aussi vous adresser à la Commission d'accès à l'information du Québec."
+          ]
+        },
+        {
+          "title": "Témoins et stockage sur votre appareil",
+          "paragraphs": [
+            "Ce site n'utilise aucun témoin (cookie) publicitaire, aucun outil de mesure d'audience et aucun script de tiers servant à vous suivre. Il n'a donc pas besoin de vous demander un consentement pour des témoins non essentiels. Si cela devait changer, ces outils resteraient désactivés tant que vous ne les auriez pas acceptés.",
+            "Il enregistre seulement, dans le stockage de votre navigateur, ce qui est nécessaire à son fonctionnement : votre profil de véhicule (s'il est rempli), votre session de connexion (si vous avez un compte), le trajet en cours (effacé après 2 heures au plus) et le fait que vous avez lu cet avis.",
+            "Pour fonctionner hors ligne, le site garde aussi une copie de ses propres pages et fichiers. Les itinéraires, les positions et les données de votre compte n'en font jamais partie.",
+            "Lors de la connexion seulement, une vérification anti-robot de Cloudflare (Turnstile) s'assure qu'une personne demande le code. Cloudflare reçoit alors des informations techniques sur votre navigateur, sans témoin publicitaire ni suivi d'un site à l'autre. Elle n'est jamais chargée sur la carte.",
+            "Les fonds de carte proviennent d'OpenFreeMap : comme pour tout site, votre navigateur leur transmet votre adresse IP pour les télécharger, mais jamais votre position ni votre identité. Vous pouvez effacer toutes ces données à tout moment dans les réglages de votre navigateur."
+          ],
+          "id": "temoins"
+        }
+      ]
+    },
+    "version": "Version du {version}"
+  },
+  "trips": {
+    "title": "Mes trajets",
+    "empty": "Aucun trajet pour l'instant. Appuyez sur « Y aller » dans la fiche d'une station.",
+    "error": "Impossible de charger vos trajets.",
+    "price": "{fuel} à {price} au départ",
+    "status": {
+      "started": "En cours",
+      "arrived": "Arrivé",
+      "cancelled": "Annulé"
+    },
+    "external": "Ouvert dans une application de navigation",
+    "noPosition": "Aucune position n'est enregistrée : seulement la station, le carburant, le prix et l'heure.",
+    "clear": "Effacer mon historique",
+    "confirmClear": "Confirmer l'effacement de tous mes trajets",
+    "cancelClear": "Annuler",
+    "clearError": "Impossible d'effacer l'historique. Réessayez."
+  }
+}

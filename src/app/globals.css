@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+body {
+  background: #ffffff;
+  color: #171717;
+  font-family: var(--font-sans);
+}
+
+/* Phones: zoom by pinching. The +/- buttons would sit under the search bar. */
+@media (width < 40rem) {
+  .maplibregl-ctrl-top-right {
+    display: none;
+  }
+}

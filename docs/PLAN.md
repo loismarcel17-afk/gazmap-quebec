@@ -72,5 +72,5 @@ Une tâche à la fois, dans l'ordre. Cocher la case quand **tous** les critères
 
 - [x] **14. PWA** : manifest, `@serwist/next`, coquille hors ligne, installable.
 - [x] **15. Bannière de témoins, pages légales, accessibilité AA, Playwright (2-3 parcours).** Textes légaux encore en brouillon : relecture par un juriste avant la mise en ligne.
-- [x] **16. Déploiement Vercel**, `.env.example` à jour, budget performance < 3 s en 4G. Configuration prête (`vercel.json`, en-têtes, `docs/DEPLOIEMENT.md`) ; mise en ligne publique en attente de la relecture juridique (réutilisation des prix Régie acceptée le 2026-10-30).
+- [x] **16. Déploiement Vercel**, `.env.example` à jour, budget performance < 3 s en 4G. Configuration prête (en-têtes, `docs/DEPLOIEMENT.md`) ; hébergeur passé de Vercel à Netlify le 2026-10-31 (`netlify.toml`) ; mise en ligne publique en attente de la relecture juridique (réutilisation des prix Régie acceptée le 2026-10-30).
 - [x] **17. Schéma `analytics`** : vues agrégées, seuil 20 utilisateurs distincts par cellule. Vues `fill_up_prices` et `trip_activity` (région × mois, mois terminés, consentement « statistiques » en cours), rôle `analytics_reader` ; procédure d'export dans `docs/DEPLOIEMENT.md` (2.8).

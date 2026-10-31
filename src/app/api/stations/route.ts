@@ -13,6 +13,9 @@ const brotli = promisify(brotliCompress);
 const gzip = promisify(gzipCallback);
 const MAX_AGE_S = 60;
 const CACHE_CONTROL = `public, max-age=0, s-maxage=${MAX_AGE_S}, stale-while-revalidate=600`;
+// Netlify's CDN reads this one first; "durable" shares the cached list between
+// its edge nodes, so a new node doesn't call this function again.
+const NETLIFY_CACHE_CONTROL = `public, durable, s-maxage=${MAX_AGE_S}, stale-while-revalidate=600`;
 
 interface Encoded {
   at: number;
@@ -51,7 +54,12 @@ export async function GET(request: Request): Promise<Response> {
   }
   try {
     const encoded = await latest!;
-    const headers = { "Content-Type": "application/json", "Cache-Control": CACHE_CONTROL, Vary: "Accept-Encoding" };
+    const headers = {
+      "Content-Type": "application/json",
+      "Cache-Control": CACHE_CONTROL,
+      "Netlify-CDN-Cache-Control": NETLIFY_CACHE_CONTROL,
+      Vary: "Accept-Encoding",
+    };
     const accepted = request.headers.get("accept-encoding") ?? "";
     if (/\bbr\b/.test(accepted)) return new Response(encoded.br, { headers: { ...headers, "Content-Encoding": "br" } });
     if (/\bgzip\b/.test(accepted)) return new Response(encoded.gzip, { headers: { ...headers, "Content-Encoding": "gzip" } });

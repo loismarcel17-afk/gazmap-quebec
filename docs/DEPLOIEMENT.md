@@ -1,6 +1,6 @@
 # Mise en production
 
-Tout est prêt dans le code. Ce guide liste ce qui se fait **une fois**, dans les tableaux de bord Supabase et Vercel.
+Tout est prêt dans le code. Ce guide liste ce qui se fait **une fois**, dans les tableaux de bord Supabase et Netlify.
 
 > ⚠️ **Ne pas rendre le site public** tant que les pages légales n'ont pas été relues par un juriste (elles portent encore la mention « Brouillon »).
 >
@@ -12,17 +12,17 @@ Tout est prêt dans le code. Ce guide liste ce qui se fait **une fois**, dans le
 
 | Pièce | Où | Région |
 | --- | --- | --- |
-| Site Next.js et routes `/api/*` | Vercel | `yul1` (Montréal), fixée dans `vercel.json` |
+| Site Next.js et routes `/api/*` | Netlify | `yul` (Montréal) sur le forfait Pro, réglée dans l'interface (3.1) ; sinon `cmh` (Ohio) |
 | Base de données, comptes, Edge Functions, tâches `pg_cron` | Supabase | Canada (Central), `ca-central-1` |
 | Prix | Régie de l'énergie, importés toutes les 15 min | — |
 | Itinéraires | Mapbox, appelé seulement par le serveur | — |
 
 ## 1. Prérequis
 
-- Un dépôt Git : Vercel déploie à chaque `git push` sur `main` (CLAUDE.md). Le dossier n'est pas encore un dépôt Git. Créez-le, poussez-le sur GitHub, puis faites le premier commit par tâche du plan.
+- Le dépôt GitHub privé `gazmap-quebec` : Netlify déploie à chaque `git push` sur `main`.
 - Les comptes suivants :
   - Supabase ;
-  - Vercel ;
+  - Netlify ;
   - Mapbox (le jeton existe déjà) ;
   - un fournisseur de courriel transactionnel (voir 2.4).
 
@@ -60,13 +60,13 @@ select vault.create_secret('https://<ref-du-projet>.supabase.co', 'project_url')
 select vault.create_secret('<clé service_role>', 'service_role_key');
 ```
 
-La clé `service_role` se trouve dans **Project Settings → API**. Ne la copiez **jamais** ailleurs que dans le Vault, et en aucun cas dans Vercel.
+La clé `service_role` se trouve dans **Project Settings → API Keys → Legacy API Keys** (format `eyJ…`, pas `sb_secret_…`). On peut aussi la verser dans le Vault sans l'afficher : `npx supabase projects api-keys` dans une variable de shell, puis `npx supabase db query --linked` avec la sortie masquée. Ne la copiez **jamais** ailleurs que dans le Vault, et en aucun cas dans Netlify.
 
 ### 2.4 Comptes et courriels (Auth)
 
 1. **Authentication → URL Configuration** (à refaire après chaque `config push`) :
    - Site URL : `https://<votre-domaine>` ;
-   - Redirect URLs : le même domaine, plus l'URL de prévisualisation Vercel.
+   - Redirect URLs : le même domaine, plus l'adresse `https://<nom-du-projet>.netlify.app`.
 2. **Authentication → SMTP** : le service d'envoi intégré à Supabase ne sert qu'aux tests (quelques courriels par heure, seulement vers les membres de l'équipe). Branchez un fournisseur transactionnel (Postmark, Resend, Amazon SES `ca-central-1`…). Expéditeur suggéré : `GazMap Québec <connexion@votre-domaine>`.
 3. Vérifiez que le modèle « Magic Link » affiche bien le code à 6 chiffres. C'est `supabase/templates/code-connexion.html`, envoyé par `config push`.
 
@@ -74,8 +74,8 @@ La clé `service_role` se trouve dans **Project Settings → API**. Ne la copiez
 
 Sans cette vérification, un script pourrait demander des codes pour des milliers d'adresses. Il épuiserait le quota d'envoi et nuirait à la réputation de votre domaine.
 
-1. Sur dash.cloudflare.com → **Turnstile** → **Add widget** : domaine `<votre-domaine>` (plus celui de prévisualisation Vercel), mode **Managed**.
-2. La **clé de site** va dans Vercel (`NEXT_PUBLIC_TURNSTILE_SITE_KEY`, étape 3.2).
+1. Sur dash.cloudflare.com → **Turnstile** → **Add widget** : domaine `<votre-domaine>` (plus `<nom-du-projet>.netlify.app`), mode **Managed**.
+2. La **clé de site** va dans Netlify (`NEXT_PUBLIC_TURNSTILE_SITE_KEY`, étape 3.2).
 3. La **clé secrète** va dans Supabase, **Authentication → Attack Protection** → CAPTCHA → Turnstile. Elle ne va nulle part ailleurs (à refaire après chaque `config push`).
 
 ### 2.6 Sauvegardes
@@ -110,43 +110,53 @@ reset role;
 
 Conservez le fichier exporté et ne refaites pas d'exports du même mois : comparer deux lectures avant et après le retrait d'un consentement pourrait isoler la contribution d'une personne. Pour donner un accès direct à un acheteur, créez-lui un utilisateur Postgres membre de `analytics_reader`, jamais une clé Supabase.
 
-## 3. Vercel
+## 3. Netlify
 
 ### 3.1 Importer le dépôt
 
-**Add New → Project** → choisir le dépôt GitHub. Le framework (Next.js), la commande de build (`npm run build`, qui construit aussi le service worker) et la région viennent de `vercel.json`.
+**Add new project → Import an existing project → GitHub** → choisir `gazmap-quebec`. Netlify reconnaît Next.js ; la commande de build (`npm run build`, qui construit aussi le service worker), le dossier `.next` et la version de Node viennent de `netlify.toml`. Chaque `git push` sur `main` redéploie le site.
+
+**Région des fonctions** (le serveur Next.js et les routes `/api/*`) : **Project configuration → Cloud compute → Functions → Region → Configure → Canada (Central) `yul`**, puis redéployer. Réservé au forfait **Pro**. Sur le forfait gratuit, le serveur tourne en Ohio (`cmh`) :
+- chaque appel à Supabase (Canada) fait un aller-retour de plus : vérifier le budget de 3 s (section 4) ;
+- Loi 25 : `/api/detours` et `/api/itineraire` reçoivent la position du visiteur, qui transite alors par les États-Unis. À couvrir dans l'évaluation des facteurs relatifs à la vie privée (comme Mapbox), ou passer à Pro avant le lancement public.
 
 ### 3.2 Variables d'environnement
 
-Dans **Settings → Environment Variables**, pour Production et pour Preview :
+**Project configuration → Environment variables → Add a variable**, portée **Builds** et **Functions** :
 
 | Nom | Valeur | Visible dans le navigateur ? |
 | --- | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://<ref-du-projet>.supabase.co` | oui, c'est normal |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | la clé publique (*publishable* ou *anon*) | oui, elle ne lit que ce que RLS permet |
 | `NEXT_PUBLIC_MAP_STYLE_URL` | `https://tiles.openfreemap.org/styles/liberty` | oui |
-| `MAPBOX_DIRECTIONS_TOKEN` | un **nouveau** jeton Mapbox (voir 3.5) | **non**, serveur seulement |
+| `MAPBOX_DIRECTIONS_TOKEN` | un **nouveau** jeton Mapbox (voir 3.5), coché **Secret** | **non**, serveur seulement |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | la clé de site Turnstile (2.5) | oui, elle est faite pour ça |
+| `SITE_NOINDEX` | `true` jusqu'au lancement public, puis supprimer | — (en-tête `X-Robots-Tag: noindex`) |
 
-Ne mettez **jamais** la clé `service_role` dans Vercel.
+Les variables `NEXT_PUBLIC_*` sont copiées dans le code du navigateur **au build** : après en avoir changé une, relancez un déploiement (**Deploys → Trigger deploy → Clear cache and deploy site**).
+
+Ne mettez **jamais** la clé `service_role` dans Netlify.
 
 ### 3.3 Domaine
 
-**Settings → Domains** : ajoutez votre domaine. Vercel s'occupe du certificat HTTPS et ajoute l'en-tête HSTS. Reportez ensuite le domaine dans Supabase (2.4).
+**Domain management → Add a domain**. Netlify fournit le certificat HTTPS (Let's Encrypt) ; l'en-tête HSTS est envoyé par le site lui-même (`next.config.ts`). Reportez ensuite le domaine dans Supabase (2.4) et dans Turnstile (2.5).
+
+En attendant un domaine, le site répond sur `https://<nom-du-projet>.netlify.app` : c'est cette adresse qui va dans Supabase et Turnstile pour la préproduction.
 
 ### 3.4 Avant le lancement public
 
-- **Settings → Deployment Protection** : activez « Vercel Authentication ». Seuls les membres de l'équipe Vercel voient alors le site.
-- Pour le désactiver le jour du lancement, il faut que les deux conditions du haut de ce guide soient remplies.
+- **Forfait Pro** : **Project configuration → Access & security → Visitor access → Password protection**. Seules les personnes qui ont le mot de passe voient le site.
+- **Forfait gratuit** : pas de mot de passe possible. Le site est public sur son adresse `netlify.app`, mais `SITE_NOINDEX=true` le tient hors des moteurs de recherche. Ne diffusez pas l'adresse.
+- Le jour du lancement (pages légales relues) : retirez la protection et `SITE_NOINDEX`, puis redéployez.
 
 ### 3.5 Sécurité des comptes et des coûts
 
 À faire une fois, avant le lancement :
 
-1. **Double authentification (2FA)** sur GitHub, Vercel, Supabase, Mapbox et Cloudflare. Ces comptes donnent accès à tout : y entrer contourne toutes les protections du code.
-2. **Nouveau jeton Mapbox.** Celui utilisé en développement a circulé dans une conversation. Créez un jeton réservé à la production (Mapbox → Access tokens), mettez-le dans Vercel, puis supprimez l'ancien.
+1. **Double authentification (2FA)** sur GitHub, Netlify, Supabase, Mapbox et Cloudflare. Ces comptes donnent accès à tout : y entrer contourne toutes les protections du code.
+2. **Nouveau jeton Mapbox.** Celui utilisé en développement a circulé dans une conversation. Créez un jeton réservé à la production (Mapbox → Access tokens), mettez-le dans Netlify, puis supprimez l'ancien.
 3. **Plafond de dépenses Mapbox** : Mapbox → Billing → alertes d'utilisation. Le site limite déjà les appels (`src/lib/api-limits.ts`), mais chaque instance du serveur compte de son côté.
-4. **Pare-feu Vercel** : **Firewall → Rules → Add rule**, chemin commençant par `/api/detours` ou `/api/itineraire`, action **Rate limit**, 60 requêtes par minute par IP. Cette limite vaut pour tous les serveurs à la fois, contrairement à celle du code.
+4. **Limite de requêtes Netlify** (forfait Pro) : **Project configuration → Access & security → Firewall / Rate limiting**, chemin commençant par `/api/detours` ou `/api/itineraire`, 60 requêtes par minute par IP. Cette limite vaut pour tous les serveurs à la fois, contrairement à celle du code. Sur le forfait gratuit, la limite du code et le plafond Mapbox (point 3) restent les seules protections.
 5. **Mises à jour de sécurité** : sur GitHub, **Settings → Code security → Dependabot alerts et security updates**. En local, `npm audit` de temps en temps.
 
 ### 3.6 Alerte si les prix cessent de se mettre à jour
@@ -174,12 +184,13 @@ Sur un téléphone, en 4G, avec le Wi-Fi coupé :
 - [ ] Le guidage vocal démarre (Mapbox) ; sinon, les liens Waze, Google Maps et Plans s'affichent.
 - [ ] En mode avion, l'appli s'ouvre et affiche le bandeau « Hors ligne ».
 - [ ] `curl -sI https://<domaine>/` montre `x-content-type-options`, `x-frame-options`, `referrer-policy`, `permissions-policy` et `strict-transport-security`.
-- [ ] `curl -sI -H "Accept-Encoding: br" https://<domaine>/api/stations` montre `content-encoding: br`, puis `x-vercel-cache: HIT` à la deuxième requête.
+- [ ] `curl -sI -H "Accept-Encoding: br" https://<domaine>/api/stations` montre `content-encoding: br`, puis `cache-status: "Netlify Edge"; hit` à la deuxième requête.
+- [ ] `curl -sI https://<domaine>/` montre `x-robots-tag: noindex, nofollow` tant que `SITE_NOINDEX=true`.
 
 ## 5. Coûts à surveiller
 
 | Service | Ce qui compte | Remarque |
 | --- | --- | --- |
-| Vercel | appels des fonctions | `/api/stations` est servie par le CDN : environ une construction par minute, quel que soit le trafic |
+| Netlify | crédits : transfert (20 crédits/Go), requêtes (2 crédits / 10 000), calcul des fonctions | `/api/stations` est servie par le CDN : environ une construction par minute, quel que soit le trafic. Une visite pèse environ 350 ko |
 | Supabase | taille de la base, nombre de comptes | l'historique des prix grossit à chaque import qui change un prix |
 | Mapbox | requêtes Matrix (`/api/detours`) et Directions (`/api/itineraire`) | sans jeton, le site estime les détours à vol d'oiseau et propose Waze, Google Maps et Plans |

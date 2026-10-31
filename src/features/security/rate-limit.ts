@@ -52,11 +52,17 @@ export function createRateLimiter({ limit, windowMs, maxKeys = 10_000, now = Dat
 }
 
 /**
- * The visitor's address, as told by the host's proxy (Vercel sets both headers;
- * the first address of x-forwarded-for is the client). Only used as a counter
- * key in memory: never logged nor stored.
+ * The visitor's address, as told by the host's proxy. On Netlify only
+ * x-nf-client-connection-ip is guaranteed: its x-forwarded-for holds several
+ * addresses, and a visitor can add their own. x-forwarded-for and x-real-ip
+ * remain for other proxies. Only used as a counter key in memory: never logged
+ * nor stored.
  */
 export function clientAddress(headers: Headers): string {
-  const forwarded = headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  return forwarded || headers.get("x-real-ip")?.trim() || "unknown";
+  return (
+    headers.get("x-nf-client-connection-ip")?.trim() ||
+    headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    headers.get("x-real-ip")?.trim() ||
+    "unknown"
+  );
 }

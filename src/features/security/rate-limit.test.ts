@@ -43,7 +43,12 @@ describe("createRateLimiter", () => {
 });
 
 describe("clientAddress", () => {
-  it("takes the client from x-forwarded-for, then x-real-ip", () => {
+  it("trusts Netlify's own header over x-forwarded-for, which a visitor can fill in", () => {
+    const headers = new Headers({ "x-nf-client-connection-ip": "198.51.100.4", "x-forwarded-for": "1.2.3.4, 198.51.100.4" });
+    expect(clientAddress(headers)).toBe("198.51.100.4");
+  });
+
+  it("otherwise takes the client from x-forwarded-for, then x-real-ip", () => {
     expect(clientAddress(new Headers({ "x-forwarded-for": "203.0.113.7, 10.0.0.1" }))).toBe("203.0.113.7");
     expect(clientAddress(new Headers({ "x-real-ip": "203.0.113.8" }))).toBe("203.0.113.8");
     expect(clientAddress(new Headers())).toBe("unknown");

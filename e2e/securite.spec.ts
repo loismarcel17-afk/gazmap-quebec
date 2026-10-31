@@ -19,6 +19,7 @@ test("security headers are sent", async ({ request }) => {
   expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
   expect(headers["permissions-policy"]).toContain("geolocation=(self)");
   expect(headers["content-security-policy"]).toContain("frame-ancestors 'none'");
+  expect(headers["strict-transport-security"]).toContain("max-age=63072000");
   expect(headers["x-powered-by"]).toBeUndefined();
 });
 

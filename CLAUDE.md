@@ -21,7 +21,7 @@ Plan de travail : `docs/PLAN.md` — travailler **une tâche à la fois**, dans 
 | Backend | Supabase, **région Canada (ca-central-1)** : Auth, Postgres + PostGIS, Edge Functions, `pg_cron` |
 | Requêtes / état | TanStack Query ; Zustand pour l'état local (profil véhicule sans compte dans `localStorage`, enveloppé de try/catch) |
 | Tests | Vitest + Testing Library ; Playwright pour 2-3 parcours clés ; tests SQL `supabase test db` (pgTAP) |
-| Hébergement | Vercel, région `yul1` (Montréal, à côté de Supabase), déploiement à chaque push sur `main` ; procédure dans `docs/DEPLOIEMENT.md` |
+| Hébergement | Netlify (adaptateur Next.js, `netlify.toml`), région des fonctions `yul` (Montréal, à côté de Supabase ; forfait Pro), déploiement à chaque push sur `main` ; procédure dans `docs/DEPLOIEMENT.md` |
 
 Ne pas ajouter d'autre dépendance majeure sans le demander. Garder la logique métier dans `src/features/*` en TypeScript pur
 (sans dépendance au DOM) pour pouvoir la réutiliser dans une future app React Native.
@@ -128,4 +128,4 @@ Dans `.env.local` (jamais commité) : `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_S
 - Content-Security-Policy construite par `src/features/security/csp.ts` (production seulement) : tout nouveau service contacté par le navigateur doit y être ajouté, sinon `e2e/securite.spec.ts` échoue.
 - Écritures des utilisateurs : privilèges par colonne. Le navigateur n'envoie que les champs saisis (trajet : `station_id, fuel, mode` ; retour : `trip_id, filled, fuel, price_paid` ; consentement : `kind, granted, document_version` ; fin de trajet : `status`). Identifiants, propriétaire, dates et prix viennent de la base. Toute nouvelle table utilisateur suit la même règle (`grant insert (colonnes…)`), avec un test pgTAP qui tente d'antidater une ligne.
 - `/api/sante` (200 / 503) surveille l'import des prix ; règles dans `src/features/stations/import-health.ts`.
-- Réglages de comptes à faire hors du code (2FA, pare-feu Vercel, plafond Mapbox, sauvegardes, Dependabot) : `docs/DEPLOIEMENT.md`, section 3.5.
+- Réglages de comptes à faire hors du code (2FA, limite de requêtes Netlify, plafond Mapbox, sauvegardes, Dependabot) : `docs/DEPLOIEMENT.md`, section 3.5.

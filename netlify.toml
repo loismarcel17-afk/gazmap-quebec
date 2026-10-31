@@ -1,0 +1,12 @@
+# Netlify build (docs/DEPLOIEMENT.md, section 3). Next.js itself is handled by
+# Netlify's adapter, detected automatically: nothing else to configure here.
+# Functions region (Montréal, `yul`): set in the UI, Pro plan only.
+
+[build]
+  # next build, then serwist (service worker).
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  # package.json "engines".
+  NODE_VERSION = "24"

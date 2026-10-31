@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 import { contentSecurityPolicy } from "./src/features/security/csp";
 
-// Sent with every page and file. HSTS is added by Vercel on HTTPS domains.
+const production = process.env.NODE_ENV === "production";
+
+// Sent with every page and file.
 const SECURITY_HEADERS = [
   // Never guess a file's type (a text file can't be run as a script).
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -14,9 +16,15 @@ const SECURITY_HEADERS = [
     key: "Permissions-Policy",
     value: "geolocation=(self), screen-wake-lock=(self), camera=(), microphone=(), payment=(), usb=(), interest-cohort=()",
   },
+  // HTTPS only, for two years (Netlify doesn't add it on custom domains).
+  // Browsers ignore it on plain http, so local `next start` is unaffected.
+  ...(production ? [{ key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" }] : []),
+  // Pre-production on a public URL: keep it out of search engines until launch
+  // (SITE_NOINDEX=true in the host's build variables, docs/DEPLOIEMENT.md).
+  ...(process.env.SITE_NOINDEX === "true" ? [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] : []),
   // What the browser may load and contact (src/features/security/csp.ts).
   // Production builds only: the dev server needs eval and a websocket for reloads.
-  ...(process.env.NODE_ENV === "production"
+  ...(production
     ? [
         {
           key: "Content-Security-Policy",

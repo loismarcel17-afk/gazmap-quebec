@@ -2,9 +2,9 @@
 
 Tout est prêt dans le code. Ce guide liste ce qui se fait **une fois**, dans les tableaux de bord Supabase et Vercel.
 
-> ⚠️ **Ne pas rendre le site public** tant que :
-> - la licence de réutilisation des prix de la Régie de l'énergie n'est pas confirmée ;
-> - les pages légales n'ont pas été relues par un juriste (elles portent encore la mention « Brouillon »).
+> ⚠️ **Ne pas rendre le site public** tant que les pages légales n'ont pas été relues par un juriste (elles portent encore la mention « Brouillon »).
+>
+> Prix de la Régie de l'énergie : réutilisation acceptée par le propriétaire du projet le 2026-10-30. La Régie qualifie ces données de publiques et les offre au téléchargement, et d'autres sites les réutilisent. Elle n'a toutefois publié aucune licence (données ouvertes « à l'étude »). Garder la mention « Source : Régie de l'énergie » et suivre ses conditions si elle en publie.
 >
 > En attendant, on peut déployer une version de prévisualisation protégée (étape 3.4).
 

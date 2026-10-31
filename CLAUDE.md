@@ -74,7 +74,7 @@ cout_total       = prix_station × litres_a_acheter + cout_detour
 
 ## Données externes
 
-- **Régie essence Québec** (prix temps réel, ~2 500 stations ; téléchargeable en Excel) : licence encore à confirmer. L'importateur passe par un **adaptateur** (`supabase/functions/import-regie/adapter.ts`) pour qu'un changement de format ne touche qu'un fichier. Si aucun fichier d'exemple n'est dans `supabase/fixtures/`, **demander à l'utilisateur** au lieu d'inventer un format. Afficher « Source : Régie de l'énergie » sur la carte.
+- **Régie essence Québec** (prix temps réel, ~2 500 stations ; téléchargeable en Excel) : données publiques, réutilisation acceptée par le propriétaire du projet (2026-10-30) ; aucune licence formelle publiée par la Régie à ce jour. L'importateur passe par un **adaptateur** (`supabase/functions/import-regie/adapter.ts`) pour qu'un changement de format ne touche qu'un fichier. Si aucun fichier d'exemple n'est dans `supabase/fixtures/`, **demander à l'utilisateur** au lieu d'inventer un format. Afficher « Source : Régie de l'énergie » sur la carte.
 - **RNCan — Cotes de consommation de carburant** (CSV par année modèle) : table de référence `vehicle_models`. Attribution requise.
 
 ## Vie privée (Loi 25) — non négociable

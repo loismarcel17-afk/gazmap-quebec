@@ -2,17 +2,15 @@
 // Triggered every 15 minutes by pg_cron (see the schedule_regie_import migration).
 // Local test: npm run db:import
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { serviceRoleToken } from "../_shared/service-auth.ts";
 import { parseRegieGeoJson, type RegieStation } from "./adapter.ts";
 
 const FEED_URL = Deno.env.get("REGIE_FEED_URL") ?? "https://regieessencequebec.ca/stations.geojson.gz";
 
 Deno.serve(async (request) => {
-  // verify_jwt only checks that the token is a valid Supabase key, and the public
-  // anon key is one. Require the service_role key so visitors can't trigger imports.
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  if (!serviceKey || request.headers.get("Authorization") !== `Bearer ${serviceKey}`) {
-    return json({ error: "forbidden" }, 403);
-  }
+  // Only the server (service_role key) may import: see _shared/service-auth.ts.
+  const serviceKey = serviceRoleToken(request.headers.get("Authorization"));
+  if (!serviceKey) return json({ error: "forbidden" }, 403);
 
   const db = createClient(Deno.env.get("SUPABASE_URL") ?? "", serviceKey, {
     auth: { persistSession: false },

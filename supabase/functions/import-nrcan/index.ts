@@ -2,6 +2,7 @@
 // NRCan updates these a few times a year: run it by hand with npm run db:import-vehicles.
 // Source: Natural Resources Canada, Open Government Licence – Canada.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { serviceRoleToken } from "../_shared/service-auth.ts";
 import { decodeNrcanCsv, parseNrcanCsv, selectRatingFiles, type VehicleModel } from "./adapter.ts";
 
 const CATALOG_URL =
@@ -10,11 +11,9 @@ const CATALOG_URL =
 const BATCH_SIZE = 2000;
 
 Deno.serve(async (request) => {
-  // Same rule as import-regie: only the server (service_role key) may import.
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  if (!serviceKey || request.headers.get("Authorization") !== `Bearer ${serviceKey}`) {
-    return json({ error: "forbidden" }, 403);
-  }
+  // Only the server (service_role key) may import: see _shared/service-auth.ts.
+  const serviceKey = serviceRoleToken(request.headers.get("Authorization"));
+  if (!serviceKey) return json({ error: "forbidden" }, 403);
   const db = createClient(Deno.env.get("SUPABASE_URL") ?? "", serviceKey, {
     auth: { persistSession: false },
   });

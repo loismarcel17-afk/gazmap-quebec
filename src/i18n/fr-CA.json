@@ -76,7 +76,6 @@
       "other": "{count} stations à moins de {radius} km, classées par prix au litre"
     },
     "cheapest": "Prix le plus bas",
-    "locate": "Indiquez votre position ou une adresse pour voir les stations et leurs prix près de vous.",
     "calculate": {
       "title": "Calculer mon plein",
       "text": "Connectez-vous pour connaître le coût total de votre plein selon votre véhicule, détour compris, et la station la plus avantageuse.",
@@ -236,7 +235,7 @@
     "chipSignedOut": "Se connecter",
     "backToMap": "Retour à la carte",
     "loading": "Chargement…",
-    "why": "Sans compte, la carte affiche les stations et leurs prix près de vous. Un compte sert à calculer le coût total de votre plein selon votre véhicule, à suivre vos trajets et à confirmer les prix payés.",
+    "why": "Sans compte, la carte affiche toutes les stations et leurs prix. Un compte sert à calculer le coût total de votre plein selon votre véhicule, à suivre vos trajets et à confirmer les prix payés.",
     "signIn": {
       "title": "Connexion",
       "email": "Adresse courriel",

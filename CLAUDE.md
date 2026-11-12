@@ -79,7 +79,7 @@ cout_total       = prix_station × litres_a_acheter + cout_detour
 
 ## Vie privée (Loi 25) — non négociable
 
-- **Sans compte** : seules les stations proches de la position (ou de l'adresse) choisie s'affichent, sur la carte et dans la liste, triées par prix au litre, avec une invitation « Calculer mon plein » vers `/compte`. **Calculer le plein** (véhicule, coût total, détours par la route) est réservé aux comptes (décision du propriétaire, 2026-11-11). Le compte sert aussi à : « J'y vais », retours, historique.
+- **Sans compte** : la carte affiche toutes les stations et leurs prix dès l'ouverture (aucune demande de position au chargement) ; après une position ou une adresse, la liste montre les stations du rayon, triées par prix au litre, avec une invitation « Calculer mon plein » vers `/compte`. **Calculer le plein** (véhicule, coût total, détours par la route) est réservé aux comptes (décision du propriétaire, 2026-11-11). Le compte sert aussi à : « J'y vais », retours, historique.
 - Localisation demandée par le navigateur seulement au moment où elle sert ; le site reste utilisable avec une adresse saisie.
 - Bannière de témoins : aucun témoin ou script d'analyse non essentiel avant consentement. Aujourd'hui il n'y en a aucun : `StorageNotice` informe seulement (stockage essentiel). Tout outil non essentiel ajouté doit rester désactivé tant qu'un vrai choix « Accepter / Refuser » n'a pas été fait, et être listé dans la politique (section `temoins`).
 - Deux consentements distincts, stockés avec horodatage : (1) conditions d'utilisation, (2) « contribuer anonymement aux statistiques » — **décoché par défaut**, retirable dans les réglages.

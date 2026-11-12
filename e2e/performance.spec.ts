@@ -26,7 +26,7 @@ test("home page usable in under 3 s on a phone in 4G", async ({ page, context, r
 
   const start = Date.now();
   await page.goto("/");
-  await expect(page.getByText(/Indiquez votre position/)).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText(/stations affichées/)).toBeVisible({ timeout: 15_000 });
   const usableMs = Date.now() - start;
 
   const transferredKb = await page.evaluate(

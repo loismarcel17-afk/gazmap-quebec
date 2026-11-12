@@ -4,7 +4,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 const PAGES = [
-  { path: "/", ready: /Indiquez votre position/ },
+  { path: "/", ready: /stations affichées/ },
   { path: "/vehicule", ready: null },
   { path: "/compte", ready: /Recevoir un code/ },
   { path: "/legal/conditions", ready: null },

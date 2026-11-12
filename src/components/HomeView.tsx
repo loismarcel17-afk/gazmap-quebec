@@ -8,13 +8,11 @@ import { findNearbyStations } from "@/features/stations/nearby";
 import { computePriceScale } from "@/features/stations/price-scale";
 import type { FuelType } from "@/features/stations/types";
 import { fuelForModel } from "@/features/vehicle/profile";
-import { formatDateTime } from "@/lib/format";
 import { interpolate, t } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 import { fetchStationsSnapshot } from "@/lib/stations-api";
 import { useVehicleStore } from "@/lib/vehicle-store";
 import { FuelSelector } from "./FuelSelector";
-import { LegalLinks } from "./LegalLinks";
 import { LocationSearch, type Origin } from "./LocationSearch";
 import { NearbyList, type RadiusKm } from "./NearbyList";
 import { OfflineBanner } from "./OfflineBanner";
@@ -67,16 +65,10 @@ export function HomeView() {
   );
   // Signed out, nothing to rank: no vehicle, no call to /api/detours.
   const { ranked, assumptions } = useRankedStations(signedIn ? nearby : [], signedIn ? origin : null);
-  // On the map, signed out: only the stations near the chosen position.
-  const mapStations = useMemo(
-    () => (signedIn ? stations : nearby.map((entry) => entry.station)),
-    [signedIn, stations, nearby],
-  );
   const visibleCount = useMemo(
-    () => mapStations.filter((station) => station.prices[fuel] !== null).length,
-    [mapStations, fuel],
+    () => stations.filter((station) => station.prices[fuel] !== null).length,
+    [stations, fuel],
   );
-  const needsPosition = !signedIn && !origin;
   const selected = selection ? stations.find((station) => station.id === selection.id) : undefined;
 
   // Stable identities (useCallback) so children's effects don't re-run on every render.
@@ -105,7 +97,7 @@ export function HomeView() {
       <div role="region" aria-label={t.map.label} className="absolute inset-0">
         {scale && (
           <StationMap
-            stations={mapStations}
+            stations={stations}
             fuel={fuel}
             scale={scale}
             selection={selection}
@@ -200,19 +192,7 @@ export function HomeView() {
             </div>
           )}
 
-          {snapshot && needsPosition && (
-            // Takes the legend's place until a position is given: keeps its
-            // source, update time and legal links on screen.
-            <div className="pointer-events-auto rounded-2xl bg-white p-3 text-sm text-zinc-800 shadow-md">
-              <p role="status">{t.nearby.locate}</p>
-              <p className="mt-1 text-xs text-zinc-600">
-                {t.map.source} · {interpolate(t.map.updatedAt, { date: formatDateTime(snapshot.updatedAt) })}
-              </p>
-              <LegalLinks className="-mb-2" />
-            </div>
-          )}
-
-          {snapshot && scale && !needsPosition && (
+          {snapshot && scale && (
             // With a list open, phones hide the legend: no room, and the list shows prices.
             <div className={`pointer-events-auto ${origin ? "hidden sm:block" : ""}`}>
               <PriceLegend scale={scale} stationCount={visibleCount} updatedAt={snapshot.updatedAt} />

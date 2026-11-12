@@ -46,8 +46,8 @@ test.beforeEach(async ({ page }) => {
 test("search a town, compare prices, open a station and head there", async ({ page }) => {
   await page.goto("/");
 
-  // Before a position: no station on the map, an invitation to give one.
-  await expect(page.getByText(/Indiquez votre position/)).toBeVisible();
+  // Before any position: every station is on the map, with the price legend.
+  await expect(page.getByText(/stations affichées/)).toBeVisible();
 
   // The storage notice: read once, then gone for good.
   const notice = page.getByRole("region", { name: "Témoins et stockage" });
@@ -93,13 +93,13 @@ test("search a town, compare prices, open a station and head there", async ({ pa
 
   // The notice stays dismissed on the next visit.
   await page.goto("/");
-  await expect(page.getByText(/Indiquez votre position/)).toBeVisible();
+  await expect(page.getByText(/stations affichées/)).toBeVisible();
   await expect(page.getByRole("region", { name: "Témoins et stockage" })).toHaveCount(0);
 });
 
 test("keyboard only: search, choose a station, close it and keep your place", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByText(/Indiquez votre position/)).toBeVisible();
+  await expect(page.getByText(/stations affichées/)).toBeVisible();
 
   // Type, pick the suggestion with the arrow keys.
   await page.getByRole("combobox").focus();

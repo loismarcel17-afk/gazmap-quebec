@@ -5,7 +5,7 @@ import { expect, test } from "@playwright/test";
 
 const PAGES = [
   // The map: style, tiles, glyphs and sprites from the map provider.
-  { path: "/", ready: /Indiquez votre position/ },
+  { path: "/", ready: /stations affichées/ },
   // The sign-in form: Cloudflare's anti-robot script and frame.
   { path: "/compte", ready: /Recevoir un code/, frame: "challenges.cloudflare.com" },
   { path: "/vehicule", ready: null },

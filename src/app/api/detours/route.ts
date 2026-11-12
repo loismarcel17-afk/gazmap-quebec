@@ -1,7 +1,10 @@
 // POST /api/detours — one-way road distances from the user to up to 24 stations.
+// For signed-in users only: calculating the fill-up needs an account, and each
+// call costs a Mapbox request.
 // Server side only: the Mapbox token never reaches the browser (CLAUDE.md).
 // Mapbox sees this server's address, not the visitor's. Coordinates are never logged.
 import { matrixUrl, parseDetourRequest, parseMatrixDistances } from "@/features/routing/matrix";
+import { signedInUser } from "@/lib/api-auth";
 import { API_LIMITS, rateLimited } from "@/lib/api-limits";
 
 const TIMEOUT_MS = 5_000;
@@ -10,6 +13,7 @@ export async function POST(request: Request): Promise<Response> {
   // Each request costs a Mapbox call: refuse loops before anything else.
   const limited = rateLimited(API_LIMITS.detours, request);
   if (limited) return limited;
+  if (!(await signedInUser(request))) return json({ error: "sign_in_required" }, 401);
 
   const body = await request.json().catch(() => null);
   const detourRequest = parseDetourRequest(body);

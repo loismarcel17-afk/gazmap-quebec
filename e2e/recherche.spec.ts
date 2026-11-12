@@ -1,7 +1,8 @@
 // End-to-end, the main journey without an account: read the storage notice,
-// search a town, get stations ranked by TOTAL fill-up cost (not by price per
-// litre), open one, and head there. Stations are served by the test, so the
-// ranking doesn't depend on today's prices.
+// search a town, get the nearby stations by price per litre (calculating the
+// fill-up needs an account: an invitation leads to sign-in), open one, and head
+// there. Stations are served by the test, so the order doesn't depend on today's
+// prices. The total-cost ranking (signed in) is covered by unit tests.
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { encodeSnapshot } from "../src/features/stations/compact";
@@ -36,12 +37,17 @@ test.beforeEach(async ({ page }) => {
     const id = new URL(route.request().url()).searchParams.get("id")?.replace("eq.", "");
     return route.fulfill({ json: STATIONS.find((s) => s.id === id) });
   });
-  // No Mapbox in tests: road distances unavailable → estimated detours.
-  await page.route("**/api/detours", (route) => route.fulfill({ status: 503 }));
+  // Signed out, the page must never ask for road distances (account only).
+  await page.route("**/api/detours", () => {
+    throw new Error("/api/detours called without an account");
+  });
 });
 
-test("search a town, compare the total cost, open a station and head there", async ({ page }) => {
+test("search a town, compare prices, open a station and head there", async ({ page }) => {
   await page.goto("/");
+
+  // Before a position: no station on the map, an invitation to give one.
+  await expect(page.getByText(/Indiquez votre position/)).toBeVisible();
 
   // The storage notice: read once, then gone for good.
   const notice = page.getByRole("region", { name: "Témoins et stockage" });
@@ -54,12 +60,21 @@ test("search a town, compare the total cost, open a station and head there", asy
   await page.getByRole("combobox").fill("sherb");
   await page.getByRole("option", { name: /Sherbrooke/ }).click();
 
-  // Ranked by total cost: Shell first even though Esso (Orford) is cheaper per litre.
+  // Signed out: by price per litre, prices only (no fill-up cost).
   const list = page.getByRole("list").filter({ hasText: "Ultramar" });
   const items = list.getByRole("listitem");
   await expect(items).toHaveCount(3);
-  await expect(items.nth(0)).toContainText("Shell");
-  await expect(items.nth(1)).toContainText("Esso"); // cheaper per litre, but the detour costs more
+  await expect(items.nth(0)).toContainText("Esso");
+  await expect(items.nth(0)).toContainText("Prix le plus bas");
+  await expect(items.nth(0)).toContainText("178,9 ¢/L");
+  await expect(items.nth(0)).not.toContainText("$");
+  await expect(items.nth(1)).toContainText("Shell");
+
+  // "Calculer mon plein" leads to sign-in.
+  await expect(page.getByText("classées par prix au litre")).toBeVisible();
+  const calculate = page.getByRole("link", { name: "Calculer mon plein : se connecter" });
+  await expect(calculate).toHaveAttribute("href", "/compte");
+  await expect(page.getByRole("link", { name: "Calculer mon plein", exact: true })).toHaveAttribute("href", "/compte");
 
   // Accessibility with the list open.
   const scan = async () =>
@@ -73,18 +88,18 @@ test("search a town, compare the total cost, open a station and head there", asy
   await expect(goThere).toBeVisible();
   expect(await scan()).toEqual([]);
   await goThere.click();
-  await expect(page).toHaveURL(/\/trajet\/sherbrooke-1\?carburant=ordinaire$/);
+  await expect(page).toHaveURL(/\/trajet\/orford\?carburant=ordinaire$/);
   await expect(page.getByRole("heading", { name: "Avant de partir" })).toBeVisible();
 
   // The notice stays dismissed on the next visit.
   await page.goto("/");
-  await expect(page.getByText(/stations affichées/)).toBeVisible();
+  await expect(page.getByText(/Indiquez votre position/)).toBeVisible();
   await expect(page.getByRole("region", { name: "Témoins et stockage" })).toHaveCount(0);
 });
 
 test("keyboard only: search, choose a station, close it and keep your place", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByText(/stations affichées/)).toBeVisible();
+  await expect(page.getByText(/Indiquez votre position/)).toBeVisible();
 
   // Type, pick the suggestion with the arrow keys.
   await page.getByRole("combobox").focus();

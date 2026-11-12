@@ -79,7 +79,7 @@ cout_total       = prix_station × litres_a_acheter + cout_detour
 
 ## Vie privée (Loi 25) — non négociable
 
-- La carte et la recommandation fonctionnent **sans compte**. Le compte sert à : profil véhicule synchronisé, « J'y vais », retours, historique.
+- **Sans compte** : seules les stations proches de la position (ou de l'adresse) choisie s'affichent, sur la carte et dans la liste, triées par prix au litre, avec une invitation « Calculer mon plein » vers `/compte`. **Calculer le plein** (véhicule, coût total, détours par la route) est réservé aux comptes (décision du propriétaire, 2026-11-11). Le compte sert aussi à : « J'y vais », retours, historique.
 - Localisation demandée par le navigateur seulement au moment où elle sert ; le site reste utilisable avec une adresse saisie.
 - Bannière de témoins : aucun témoin ou script d'analyse non essentiel avant consentement. Aujourd'hui il n'y en a aucun : `StorageNotice` informe seulement (stockage essentiel). Tout outil non essentiel ajouté doit rester désactivé tant qu'un vrai choix « Accepter / Refuser » n'a pas été fait, et être listé dans la politique (section `temoins`).
 - Deux consentements distincts, stockés avec horodatage : (1) conditions d'utilisation, (2) « contribuer anonymement aux statistiques » — **décoché par défaut**, retirable dans les réglages.
@@ -124,6 +124,7 @@ Dans `.env.local` (jamais commité) : `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_S
 ## Sécurité
 
 - Toute route API qui appelle un service payant passe d'abord par `rateLimited()` (`src/lib/api-limits.ts`) : limite par adresse et par instance, réponse 429.
+- `/api/detours` (calcul du plein) exige une session : `signedInUser()` (`src/lib/api-auth.ts`) vérifie le jeton Supabase envoyé par le navigateur, sinon 401. Le blocage dans l'interface ne suffit jamais seul.
 - Connexion : Supabase exige un jeton Turnstile (`[auth.captcha]`) ; le script Cloudflare n'est chargé que sur `/compte`, jamais sur la carte.
 - Content-Security-Policy construite par `src/features/security/csp.ts` (production seulement) : tout nouveau service contacté par le navigateur doit y être ajouté, sinon `e2e/securite.spec.ts` échoue.
 - Écritures des utilisateurs : privilèges par colonne. Le navigateur n'envoie que les champs saisis (trajet : `station_id, fuel, mode` ; retour : `trip_id, filled, fuel, price_paid` ; consentement : `kind, granted, document_version` ; fin de trajet : `status`). Identifiants, propriétaire, dates et prix viennent de la base. Toute nouvelle table utilisateur suit la même règle (`grant insert (colonnes…)`), avec un test pgTAP qui tente d'antidater une ligne.

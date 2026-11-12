@@ -71,6 +71,17 @@
       "one": "{count} station à moins de {radius} km",
       "other": "{count} stations à moins de {radius} km, classées par coût total du plein"
     },
+    "summaryByPrice": {
+      "one": "{count} station à moins de {radius} km",
+      "other": "{count} stations à moins de {radius} km, classées par prix au litre"
+    },
+    "cheapest": "Prix le plus bas",
+    "locate": "Indiquez votre position ou une adresse pour voir les stations et leurs prix près de vous.",
+    "calculate": {
+      "title": "Calculer mon plein",
+      "text": "Connectez-vous pour connaître le coût total de votre plein selon votre véhicule, détour compris, et la station la plus avantageuse.",
+      "cta": "Calculer mon plein : se connecter"
+    },
     "radius": "Rayon de recherche",
     "radiusOption": "{radius} km",
     "distance": "à {distance}",
@@ -102,7 +113,7 @@
   },
   "vehicle": {
     "title": "Mon véhicule",
-    "intro": "Votre véhicule sert à estimer le coût de votre plein, détour compris. Il reste enregistré sur cet appareil seulement, sans compte.",
+    "intro": "Votre véhicule sert à calculer le coût de votre plein, détour compris. Il est enregistré sur cet appareil.",
     "backToMap": "Retour à la carte",
     "chooseModel": "Modèle",
     "year": "Année",
@@ -136,6 +147,9 @@
     "remove": "Retirer mon véhicule",
     "chip": "{make} {model} {year} · {consumption} L/100 km",
     "chipEmpty": "Ajouter mon véhicule (facultatif)",
+    "chipSignedOut": "Calculer mon plein",
+    "signInRequired": "Connectez-vous pour enregistrer votre véhicule et calculer le coût total de votre plein.",
+    "signInCta": "Se connecter",
     "attribution": "Source : Ressources naturelles Canada, Cotes de consommation de carburant. Contient des informations visées par la Licence du gouvernement ouvert – Canada.",
     "licence": "Licence du gouvernement ouvert – Canada"
   },
@@ -222,7 +236,7 @@
     "chipSignedOut": "Se connecter",
     "backToMap": "Retour à la carte",
     "loading": "Chargement…",
-    "why": "Sans compte, la carte et les recommandations fonctionnent déjà. Un compte sert à synchroniser votre véhicule, à suivre vos trajets et à confirmer les prix payés.",
+    "why": "Sans compte, la carte affiche les stations et leurs prix près de vous. Un compte sert à calculer le coût total de votre plein selon votre véhicule, à suivre vos trajets et à confirmer les prix payés.",
     "signIn": {
       "title": "Connexion",
       "email": "Adresse courriel",
@@ -272,7 +286,7 @@
       "deleteIntro": "Votre adresse courriel, vos consentements, vos trajets et vos prix confirmés seront effacés définitivement.",
       "delete": "Supprimer mon compte…",
       "deleteConfirmTitle": "Supprimer votre compte ?",
-      "deleteConfirmText": "Cette action est immédiate et irréversible. Le profil de véhicule enregistré sur cet appareil est conservé ; vous pouvez le modifier sans compte.",
+      "deleteConfirmText": "Cette action est immédiate et irréversible. Le profil de véhicule enregistré sur cet appareil est conservé.",
       "deleteConfirm": "Supprimer définitivement",
       "deleteCancel": "Annuler",
       "deleting": "Suppression…",
@@ -347,7 +361,7 @@
         {
           "title": "Sans compte",
           "paragraphs": [
-            "Votre position sert seulement à calculer les distances et les trajets. Elle est envoyée à notre serveur, puis à Mapbox pour le calcul des itinéraires, sans être enregistrée ni associée à votre identité. Pendant un guidage, seules la position de départ et celle d'un recalcul sont envoyées.",
+            "Votre position sert seulement à trouver les stations proches, sur votre appareil. Pour le calcul du plein (avec un compte) et le guidage, elle est envoyée à notre serveur, puis à Mapbox pour le calcul des itinéraires, sans être enregistrée. Pendant un guidage, seules la position de départ et celle d'un recalcul sont envoyées.",
             "Votre véhicule (modèle, réservoir, niveau) est enregistré sur votre appareil seulement."
           ]
         },

@@ -1,11 +1,13 @@
 import type { LatLng } from "@/features/geo/geo";
 import { MAX_DESTINATIONS, type RoadDistances } from "@/features/routing/matrix";
 import type { Station } from "@/features/stations/types";
+import { supabase } from "./supabase";
 
 /**
  * Road distances from `origin` to the first 24 stations, through our API route.
  * Returns null when routing is unavailable (no Mapbox token, Mapbox down,
- * offline): callers then rank with straight-line distances.
+ * offline, signed out): callers then rank with straight-line distances.
+ * The route is for signed-in users: the session's access token goes along.
  *
  * Privacy: this sends the position to our server (and, through it, to Mapbox).
  * Only call it after the user asked for nearby stations, and say so in the UI.
@@ -14,9 +16,12 @@ export async function fetchRoadDistances(origin: LatLng, stations: Station[]): P
   const candidates = stations.slice(0, MAX_DESTINATIONS).map(({ id, lat, lng }) => ({ id, lat, lng }));
   if (candidates.length === 0) return {};
   try {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) return null;
     const response = await fetch("/api/detours", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ origin: { lat: origin.lat, lng: origin.lng }, stations: candidates }),
     });
     if (!response.ok) return null;

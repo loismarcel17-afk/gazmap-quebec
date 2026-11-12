@@ -1,5 +1,8 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { signedInUser } from "@/lib/api-auth";
 import { POST } from "./route";
+
+vi.mock("@/lib/api-auth", () => ({ signedInUser: vi.fn() }));
 
 const BODY = {
   origin: { lat: 45.5017, lng: -73.5673 },
@@ -11,6 +14,10 @@ const BODY = {
 
 const post = (body: unknown) =>
   POST(new Request("http://localhost/api/detours", { method: "POST", body: JSON.stringify(body) }));
+
+beforeEach(() => {
+  vi.mocked(signedInUser).mockResolvedValue("user-1");
+});
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -30,6 +37,19 @@ describe("POST /api/detours", () => {
     expect(await response.json()).toEqual({ distances: { a: 1830.4, b: 2675.1 } });
     expect(response.headers.get("Cache-Control")).toBe("no-store");
     expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it("refuses visitors without an account (401) without calling Mapbox", async () => {
+    vi.stubEnv("MAPBOX_DIRECTIONS_TOKEN", "pk.test");
+    vi.mocked(signedInUser).mockResolvedValue(null);
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await post(BODY);
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ error: "sign_in_required" });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("rejects an invalid body without calling Mapbox", async () => {

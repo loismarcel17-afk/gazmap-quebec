@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { t } from "@/lib/i18n";
+import { useSession } from "@/lib/session";
 import { useVehicleHydrated } from "@/lib/vehicle-store";
 import { VehicleForm } from "./VehicleForm";
 
@@ -10,6 +11,8 @@ const LICENCE_URL = "https://ouvert.canada.ca/fr/licence-du-gouvernement-ouvert-
 export function VehiclePage() {
   // The form starts from the saved profile: wait until it's been read.
   const hydrated = useVehicleHydrated();
+  // The vehicle only serves to calculate the fill-up, which needs an account.
+  const session = useSession();
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col gap-6 p-4 pb-10">
@@ -28,7 +31,21 @@ export function VehiclePage() {
         <p className="mt-1 text-zinc-700">{t.vehicle.intro}</p>
       </header>
 
-      {hydrated ? <VehicleForm /> : <p className="text-zinc-700">{t.vehicle.loading}</p>}
+      {session.status === "signedOut" ? (
+        <div className="rounded-2xl bg-blue-50 p-4 text-blue-950">
+          <p>{t.vehicle.signInRequired}</p>
+          <Link
+            href="/compte"
+            className="mt-3 inline-flex min-h-11 items-center rounded-full bg-blue-800 px-5 font-medium text-white hover:bg-blue-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+          >
+            {t.vehicle.signInCta}
+          </Link>
+        </div>
+      ) : hydrated && session.status === "signedIn" ? (
+        <VehicleForm />
+      ) : (
+        <p className="text-zinc-700">{t.vehicle.loading}</p>
+      )}
 
       <footer className="mt-auto border-t border-zinc-200 pt-4 text-xs text-zinc-600">
         {t.vehicle.attribution}{" "}

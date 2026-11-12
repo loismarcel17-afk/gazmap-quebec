@@ -8,10 +8,13 @@ import { findNearbyStations } from "@/features/stations/nearby";
 import { computePriceScale } from "@/features/stations/price-scale";
 import type { FuelType } from "@/features/stations/types";
 import { fuelForModel } from "@/features/vehicle/profile";
+import { formatDateTime } from "@/lib/format";
 import { interpolate, t } from "@/lib/i18n";
+import { useSession } from "@/lib/session";
 import { fetchStationsSnapshot } from "@/lib/stations-api";
 import { useVehicleStore } from "@/lib/vehicle-store";
 import { FuelSelector } from "./FuelSelector";
+import { LegalLinks } from "./LegalLinks";
 import { LocationSearch, type Origin } from "./LocationSearch";
 import { NearbyList, type RadiusKm } from "./NearbyList";
 import { OfflineBanner } from "./OfflineBanner";
@@ -20,7 +23,7 @@ import { StorageNotice } from "./StorageNotice";
 import { PriceLegend } from "./PriceLegend";
 import { StationSheet } from "./StationSheet";
 import { AccountChip } from "./AccountChip";
-import { VehicleChip } from "./VehicleChip";
+import { CalculateChip, VehicleChip } from "./VehicleChip";
 import type { Selection } from "./station-map/StationMap";
 import { useRankedStations } from "./useRankedStations";
 
@@ -31,6 +34,9 @@ const StationMap = dynamic(() => import("./station-map/StationMap"), { ssr: fals
 /** Prices change through the day: refresh while the page is open (paused in background tabs). */
 const REFRESH_MS = 5 * 60 * 1000;
 
+const listTitle = (origin: Origin) =>
+  origin.fromDevice ? t.nearby.titleNearYou : interpolate(t.nearby.title, { place: origin.label });
+
 export function HomeView() {
   // TanStack Query handles loading / error / retry / caching / periodic refresh.
   const query = useQuery({
@@ -39,10 +45,14 @@ export function HomeView() {
     staleTime: REFRESH_MS,
     refetchInterval: REFRESH_MS,
   });
-  // Fuel shown: the user's choice, else their vehicle's fuel, else regular.
+  // Signed out: nearby stations and their prices only. Calculating the fill-up
+  // (vehicle, total cost, road detours) is for signed-in users. Until the stored
+  // session is read ("loading"), behave as signed out.
+  const signedIn = useSession().status === "signedIn";
+  // Fuel shown: the user's choice, else their vehicle's fuel (signed in), else regular.
   const [chosenFuel, setChosenFuel] = useState<FuelType | null>(null);
   const vehicleFuel = useVehicleStore((state) => fuelForModel(state.model));
-  const fuel = chosenFuel ?? vehicleFuel ?? "regular";
+  const fuel = chosenFuel ?? (signedIn ? vehicleFuel : null) ?? "regular";
   const [selection, setSelection] = useState<Selection | null>(null);
   const [origin, setOrigin] = useState<Origin | null>(null);
   const [radiusKm, setRadiusKm] = useState<RadiusKm>(10);
@@ -55,11 +65,18 @@ export function HomeView() {
     () => (origin ? findNearbyStations(stations, origin, radiusKm * 1000, fuel) : []),
     [stations, origin, radiusKm, fuel],
   );
-  const { ranked, assumptions } = useRankedStations(nearby, origin);
-  const visibleCount = useMemo(
-    () => stations.filter((station) => station.prices[fuel] !== null).length,
-    [stations, fuel],
+  // Signed out, nothing to rank: no vehicle, no call to /api/detours.
+  const { ranked, assumptions } = useRankedStations(signedIn ? nearby : [], signedIn ? origin : null);
+  // On the map, signed out: only the stations near the chosen position.
+  const mapStations = useMemo(
+    () => (signedIn ? stations : nearby.map((entry) => entry.station)),
+    [signedIn, stations, nearby],
   );
+  const visibleCount = useMemo(
+    () => mapStations.filter((station) => station.prices[fuel] !== null).length,
+    [mapStations, fuel],
+  );
+  const needsPosition = !signedIn && !origin;
   const selected = selection ? stations.find((station) => station.id === selection.id) : undefined;
 
   // Stable identities (useCallback) so children's effects don't re-run on every render.
@@ -88,7 +105,7 @@ export function HomeView() {
       <div role="region" aria-label={t.map.label} className="absolute inset-0">
         {scale && (
           <StationMap
-            stations={stations}
+            stations={mapStations}
             fuel={fuel}
             scale={scale}
             selection={selection}
@@ -144,7 +161,7 @@ export function HomeView() {
         )}
 
         <div className="pointer-events-auto flex flex-wrap gap-2 self-start">
-          <VehicleChip />
+          {signedIn ? <VehicleChip /> : <CalculateChip />}
           <AccountChip />
         </div>
 
@@ -159,19 +176,43 @@ export function HomeView() {
           </div>
           {origin && (
             <div className="pointer-events-auto flex min-h-0 flex-col sm:flex-1 sm:justify-end">
-              <NearbyList
-                title={origin.fromDevice ? t.nearby.titleNearYou : interpolate(t.nearby.title, { place: origin.label })}
-                results={ranked}
-                assumptions={assumptions}
-                radiusKm={radiusKm}
-                onRadiusChange={setRadiusKm}
-                selectedId={selection?.id ?? null}
-                onSelect={selectFromList}
-              />
+              {signedIn ? (
+                <NearbyList
+                  title={listTitle(origin)}
+                  results={ranked}
+                  assumptions={assumptions}
+                  radiusKm={radiusKm}
+                  onRadiusChange={setRadiusKm}
+                  selectedId={selection?.id ?? null}
+                  onSelect={selectFromList}
+                />
+              ) : (
+                <NearbyList
+                  mode="price"
+                  title={listTitle(origin)}
+                  results={nearby}
+                  radiusKm={radiusKm}
+                  onRadiusChange={setRadiusKm}
+                  selectedId={selection?.id ?? null}
+                  onSelect={selectFromList}
+                />
+              )}
             </div>
           )}
 
-          {snapshot && scale && (
+          {snapshot && needsPosition && (
+            // Takes the legend's place until a position is given: keeps its
+            // source, update time and legal links on screen.
+            <div className="pointer-events-auto rounded-2xl bg-white p-3 text-sm text-zinc-800 shadow-md">
+              <p role="status">{t.nearby.locate}</p>
+              <p className="mt-1 text-xs text-zinc-600">
+                {t.map.source} · {interpolate(t.map.updatedAt, { date: formatDateTime(snapshot.updatedAt) })}
+              </p>
+              <LegalLinks className="-mb-2" />
+            </div>
+          )}
+
+          {snapshot && scale && !needsPosition && (
             // With a list open, phones hide the legend: no room, and the list shows prices.
             <div className={`pointer-events-auto ${origin ? "hidden sm:block" : ""}`}>
               <PriceLegend scale={scale} stationCount={visibleCount} updatedAt={snapshot.updatedAt} />

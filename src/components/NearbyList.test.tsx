@@ -105,4 +105,24 @@ describe("NearbyList", () => {
     fireEvent.click(screen.getByRole("button", { name: "Chercher à 50 km" }));
     expect(onRadiusChange).toHaveBeenCalledWith(50);
   });
+
+  it("signed out: lists stations by price only, and invites to sign in to calculate the fill-up", () => {
+    render(
+      <NearbyList
+        mode="price"
+        title="Près de Rimouski"
+        results={[nearby("far", "Esso", 1849, 15_000), nearby("near", "Shell", 1859, 1_000)]}
+        radiusKm={25}
+        selectedId={null}
+        onRadiusChange={vi.fn()}
+        onSelect={vi.fn()}
+      />,
+    );
+    const items = screen.getAllByRole("listitem");
+    expect(plain(items[0].textContent)).toBe("EssoPrix le plus basfar rue Principale, Rimouski· à 15 km184,9 ¢/L");
+    expect(plain(items[1].textContent)).toBe("Shellnear rue Principale, Rimouski· à 1 km185,9 ¢/L");
+    expect(screen.queryByText(/\$/)).toBeNull(); // no fill-up cost anywhere
+    expect(screen.getByText(/classées par prix au litre/)).toBeDefined();
+    expect(screen.getByRole("link", { name: "Calculer mon plein : se connecter" }).getAttribute("href")).toBe("/compte");
+  });
 });

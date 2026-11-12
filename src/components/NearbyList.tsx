@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import type { RankedStation } from "@/features/recommendation/rank";
+import type { NearbyStation } from "@/features/stations/nearby";
 import { formatDistance, formatInteger, formatMoney, formatPrice } from "@/lib/format";
 import { interpolate, plural, t } from "@/lib/i18n";
 
@@ -21,32 +22,54 @@ export interface FillUpAssumptions {
   hasVehicle: boolean;
 }
 
-interface NearbyListProps {
+interface CommonProps {
   /** "Près de Rimouski" or "Près de vous" */
   title: string;
-  /** Ranked by total fill-up cost, best first */
-  results: RankedStation[];
-  assumptions: FillUpAssumptions;
   radiusKm: RadiusKm;
   onRadiusChange: (radius: RadiusKm) => void;
   selectedId: string | null;
   onSelect: (id: string) => void;
 }
 
+/**
+ * Two modes:
+ * - "cost" (signed in): ranked by total fill-up cost, with the best choice explained;
+ * - "price" (signed out): cheapest per litre first, and an invitation to sign in
+ *   to calculate the fill-up.
+ */
+type NearbyListProps = CommonProps &
+  (
+    | { mode?: "cost"; results: RankedStation[]; assumptions: FillUpAssumptions }
+    | { mode: "price"; results: NearbyStation[] }
+  );
+
+/** What one row shows, whatever the mode. */
+interface Row {
+  station: NearbyStation["station"];
+  price: number;
+  /** One-way: detour / 2 in cost mode (road or estimated), straight line in price mode */
+  distanceMeters: number;
+  /** Total fill-up cost, cost mode only */
+  total: number | null;
+}
+
 /** One-way distance used for the detour (road, estimated or straight line). */
 const oneWay = (entry: RankedStation) => entry.cost.detourMeters / 2;
 
-export function NearbyList({
-  title,
-  results,
-  assumptions,
-  radiusKm,
-  onRadiusChange,
-  selectedId,
-  onSelect,
-}: NearbyListProps) {
+export function NearbyList(props: NearbyListProps) {
+  const { title, radiusKm, onRadiusChange, selectedId, onSelect } = props;
   const listRef = useRef<HTMLOListElement>(null);
-  const shown = results.slice(0, MAX_ITEMS);
+  const rows: Row[] =
+    props.mode === "price"
+      ? props.results.map((entry) => ({ ...entry, total: null }))
+      : props.results.map((entry) => ({
+          station: entry.station,
+          price: entry.price,
+          distanceMeters: oneWay(entry),
+          total: entry.cost.total,
+        }));
+  const results = props.results;
+  const shown = rows.slice(0, MAX_ITEMS);
   const widerRadius = RADIUS_OPTIONS_KM.find((radius) => radius > radiusKm);
 
   // When a station is picked on the map, scroll the list to it.
@@ -66,7 +89,10 @@ export function NearbyList({
           {title}
         </h2>
         <p className="text-xs text-zinc-600">
-          {plural(t.nearby.summary, results.length, { count: formatInteger(results.length), radius: radiusKm })}
+          {plural(props.mode === "price" ? t.nearby.summaryByPrice : t.nearby.summary, results.length, {
+            count: formatInteger(results.length),
+            radius: radiusKm,
+          })}
         </p>
         <div role="group" aria-label={t.nearby.radius} className="mt-2 flex gap-1">
           {RADIUS_OPTIONS_KM.map((radius) => (
@@ -98,7 +124,11 @@ export function NearbyList({
         </div>
       ) : (
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          <BestChoice results={results} assumptions={assumptions} />
+          {props.mode === "price" ? (
+            <CalculateInvite />
+          ) : (
+            <BestChoice results={props.results} assumptions={props.assumptions} />
+          )}
           <ol ref={listRef} className="p-1">
             {shown.map((entry, index) => (
               <li key={entry.station.id} data-station-id={entry.station.id}>
@@ -113,22 +143,26 @@ export function NearbyList({
                       <span className="truncate font-medium text-zinc-950">
                         {entry.station.brand ?? t.station.independent}
                       </span>
-                      {index === 0 && <Tag tone="best">{t.nearby.best}</Tag>}
+                      {index === 0 && <Tag tone="best">{entry.total === null ? t.nearby.cheapest : t.nearby.best}</Tag>}
                       {entry.station.sponsored && <Tag tone="sponsored">{t.nearby.sponsored}</Tag>}
                     </span>
                     {/* Only the address is cut when space runs out, never the distance. */}
                     <span className="flex gap-1 text-xs text-zinc-600">
                       <span className="truncate">{entry.station.address}</span>
                       <span className="shrink-0">
-                        · {interpolate(t.nearby.distance, { distance: formatDistance(oneWay(entry)) })}
+                        · {interpolate(t.nearby.distance, { distance: formatDistance(entry.distanceMeters) })}
                       </span>
                     </span>
                   </span>
                   <span className="shrink-0 text-right">
-                    <span className="block font-semibold text-zinc-950 tabular-nums">
-                      {formatMoney(entry.cost.total)}
-                    </span>
-                    <span className="block text-xs text-zinc-600 tabular-nums">{formatPrice(entry.price)}</span>
+                    {entry.total === null ? (
+                      <span className="block font-semibold text-zinc-950 tabular-nums">{formatPrice(entry.price)}</span>
+                    ) : (
+                      <>
+                        <span className="block font-semibold text-zinc-950 tabular-nums">{formatMoney(entry.total)}</span>
+                        <span className="block text-xs text-zinc-600 tabular-nums">{formatPrice(entry.price)}</span>
+                      </>
+                    )}
                   </span>
                 </button>
               </li>
@@ -139,10 +173,26 @@ export function NearbyList({
               </li>
             )}
           </ol>
-          <Assumptions results={results} assumptions={assumptions} />
+          {props.mode !== "price" && <Assumptions results={props.results} assumptions={props.assumptions} />}
         </div>
       )}
     </section>
+  );
+}
+
+/** Signed out: the fill-up cost needs an account. */
+function CalculateInvite() {
+  return (
+    <div className="m-2 rounded-xl bg-blue-50 p-3 text-sm text-blue-950">
+      <p className="text-base font-semibold">{t.nearby.calculate.title}</p>
+      <p className="mt-0.5">{t.nearby.calculate.text}</p>
+      <Link
+        href="/compte"
+        className="mt-2 flex min-h-11 items-center justify-center rounded-full bg-blue-800 px-4 font-medium text-white hover:bg-blue-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+      >
+        {t.nearby.calculate.cta}
+      </Link>
+    </div>
   );
 }
 

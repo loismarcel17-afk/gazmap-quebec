@@ -74,3 +74,18 @@ Une tâche à la fois, dans l'ordre. Cocher la case quand **tous** les critères
 - [x] **15. Bannière de témoins, pages légales, accessibilité AA, Playwright (2-3 parcours).** Textes légaux encore en brouillon : relecture par un juriste avant la mise en ligne.
 - [x] **16. Déploiement Vercel**, `.env.example` à jour, budget performance < 3 s en 4G. Configuration prête (en-têtes, `docs/DEPLOIEMENT.md`) ; hébergeur passé de Vercel à Netlify le 2026-10-31 (`netlify.toml`) ; mise en ligne publique en attente de la relecture juridique (réutilisation des prix Régie acceptée le 2026-10-30).
 - [x] **17. Schéma `analytics`** : vues agrégées, seuil 20 utilisateurs distincts par cellule. Vues `fill_up_prices` et `trip_activity` (région × mois, mois terminés, consentement « statistiques » en cours), rôle `analytics_reader` ; procédure d'export dans `docs/DEPLOIEMENT.md` (2.8).
+
+## Phase 6 — Après la bêta
+
+- [x] **18. Planifier un trajet (comptes)** — demandé par un testeur (2026-11-14).
+  - Page `/planifier` : départ (ma position ou adresse) → destination (adresse précise, géocodage Mapbox via
+    `POST /api/adresses`, session exigée, rien de journalisé ni de stocké sur le serveur) → question
+    « Où voulez-vous faire le plein ? En chemin / À destination ».
+  - **En chemin** : route A → B (`POST /api/parcours`, tracé complet simplifié à 50 m sur le serveur, `routing/simplify.ts`), stations dans un corridor de 3 km autour du tracé
+    (`src/features/routing/corridor.ts`), détour réel = A → station → B − A → B (`Detour.kind = "route"`, deux
+    appels Matrix via `POST /api/parcours/detours`), classement au coût total.
+  - **À destination** : stations autour de B, classement actuel (aller-retour depuis B).
+  - « J'y vais » : guidage vers la station, puis, après le retour, « Continuer vers <destination> » : guidage
+    `/destination` (`/api/itineraire` accepte une destination libre pour les comptes seulement). Destination gardée
+    sur l'appareil seulement (`localStorage`, 12 h). Liens Waze / Google Maps / Apple Maps gardés en secondaire.
+  - Politique de confidentialité : la destination est envoyée à Mapbox pour le calcul, jamais conservée.

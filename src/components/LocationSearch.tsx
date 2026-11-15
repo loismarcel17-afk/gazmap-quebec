@@ -1,15 +1,27 @@
+import { useQuery } from "@tanstack/react-query";
 import { useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import type { LatLng } from "@/features/geo/geo";
+import { MIN_QUERY_LENGTH, looksLikeStreetAddress, type AddressSuggestion } from "@/features/places/geocoding";
 import { searchPlaces, type Place } from "@/features/places/places";
 import { formatInteger } from "@/lib/format";
 import { GeolocationFailure, getCurrentPosition, type GeolocationFailureReason } from "@/lib/geolocation";
 import { plural, t } from "@/lib/i18n";
+import { searchAddresses } from "@/lib/planner-api";
+import { useDebounced } from "@/lib/use-debounced";
+
+/** Wait for a pause in typing before a (billed) address search. */
+const ADDRESS_DEBOUNCE_MS = 400;
+
+/** A suggestion: a town / postal area (local, free) or a street address (Mapbox). */
+type Option = { kind: "place"; place: Place } | { kind: "address"; address: AddressSuggestion };
 
 /** Where to search around: the user's position or a chosen place. */
 export interface Origin extends LatLng {
   label: string;
   /** true: the device's position ("Ma position"); false: a searched place */
   fromDevice: boolean;
+  /** A street address (not a whole town): a small radius is enough */
+  precise?: boolean;
 }
 
 interface LocationSearchProps {
@@ -28,14 +40,49 @@ export function LocationSearch({ places, onOriginChange }: LocationSearchProps) 
   const listboxId = useId();
   const optionId = (index: number) => `${listboxId}-${index}`;
 
-  const suggestions = useMemo(() => searchPlaces(places, query), [places, query]);
+  const localSuggestions = useMemo(() => searchPlaces(places, query), [places, query]);
+
+  // Street addresses: asked to Mapbox (through /api/adresses) only after a pause
+  // in typing, and only for text that looks like a street or that no town /
+  // postal code matches. "Rimouski" stays a free, on-device search.
+  const typed = useDebounced(query.trim(), ADDRESS_DEBOUNCE_MS);
+  const streetLike = looksLikeStreetAddress(typed);
+  const wantAddresses =
+    open && typed.length >= MIN_QUERY_LENGTH && (streetLike || searchPlaces(places, typed).length === 0);
+  const addressQuery = useQuery({
+    queryKey: ["addresses", typed, null, null],
+    queryFn: () => searchAddresses(typed, null),
+    enabled: wantAddresses,
+    staleTime: 10 * 60 * 1000,
+    retry: false,
+  });
+  const addresses = useMemo(
+    () => (wantAddresses ? (addressQuery.data ?? []) : []),
+    [wantAddresses, addressQuery.data],
+  );
+  // During the typing pause an address search is coming: say "searching", not "no result".
+  const current = query.trim();
+  const addressComing =
+    open &&
+    current !== typed &&
+    current.length >= MIN_QUERY_LENGTH &&
+    (looksLikeStreetAddress(current) || localSuggestions.length === 0);
+  const searchingAddresses = addressComing || (wantAddresses && addressQuery.isPending);
+
+  const suggestions = useMemo<Option[]>(() => {
+    const local = localSuggestions.map((place): Option => ({ kind: "place", place }));
+    const remote = addresses.map((address): Option => ({ kind: "address", address }));
+    // "1000 rue Saint-Jean": addresses first. "Saint-Jean": towns first.
+    return streetLike ? [...remote, ...local] : [...local, ...remote];
+  }, [localSuggestions, addresses, streetLike]);
   const showList = open && query.trim().length >= 2;
 
-  function choose(place: Place) {
-    setQuery(place.label);
+  function choose(option: Option) {
+    const { lat, lng, label } = option.kind === "place" ? option.place : option.address;
+    setQuery(label);
     setOpen(false);
     setError(null);
-    onOriginChange({ lat: place.lat, lng: place.lng, label: place.label, fromDevice: false });
+    onOriginChange({ lat, lng, label, fromDevice: false, precise: option.kind === "address" });
   }
 
   function clear() {
@@ -142,25 +189,42 @@ export function LocationSearch({ places, onOriginChange }: LocationSearchProps) 
       {showList && (
         <div className="absolute inset-x-0 top-full z-30 mt-1 overflow-hidden rounded-xl bg-white shadow-lg">
           <ul id={listboxId} role="listbox" aria-label={t.search.suggestions}>
-            {suggestions.map((place, index) => (
+            {suggestions.map((option, index) => (
               <li
-                key={`${place.kind}-${place.key}`}
+                key={option.kind === "place" ? `${option.place.kind}-${option.place.key}` : `address-${index}-${option.address.label}`}
                 id={optionId(index)}
                 role="option"
                 aria-selected={index === activeIndex}
                 // mousedown fires before the input's blur: keep focus so the click lands.
                 onMouseDown={(event) => event.preventDefault()}
-                onClick={() => choose(place)}
-                className="flex min-h-11 cursor-pointer items-center justify-between gap-2 px-4 text-zinc-900 hover:bg-zinc-100 aria-selected:bg-zinc-100"
+                onClick={() => choose(option)}
+                className="flex min-h-11 cursor-pointer items-center justify-between gap-2 px-4 py-1.5 text-zinc-900 hover:bg-zinc-100 aria-selected:bg-zinc-100"
               >
-                <span className="truncate">{place.label}</span>
-                <span className="shrink-0 text-xs text-zinc-600">
-                  {plural(t.search.stationCount, place.stationCount, { count: formatInteger(place.stationCount) })}
-                </span>
+                {option.kind === "place" ? (
+                  <>
+                    <span className="truncate">{option.place.label}</span>
+                    <span className="shrink-0 text-xs text-zinc-600">
+                      {plural(t.search.stationCount, option.place.stationCount, {
+                        count: formatInteger(option.place.stationCount),
+                      })}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="min-w-0">{option.address.label}</span>
+                    <span className="shrink-0 text-xs text-zinc-600">{t.search.addressTag}</span>
+                  </>
+                )}
               </li>
             ))}
           </ul>
-          {suggestions.length === 0 && <p className="px-4 py-3 text-sm text-zinc-700">{t.search.noResult}</p>}
+          {searchingAddresses && <p className="px-4 py-2 text-sm text-zinc-600">{t.search.searchingAddresses}</p>}
+          {!searchingAddresses && suggestions.length === 0 && (
+            <p className="px-4 py-3 text-sm text-zinc-700">
+              {wantAddresses && addressQuery.data === null ? t.search.addressUnavailable : t.search.noResult}
+            </p>
+          )}
+          {addresses.length > 0 && <p className="px-4 pb-2 text-right text-xs text-zinc-600">{t.search.addressSource}</p>}
         </div>
       )}
 

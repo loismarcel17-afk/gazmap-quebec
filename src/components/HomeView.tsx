@@ -9,6 +9,7 @@ import { computePriceScale } from "@/features/stations/price-scale";
 import type { FuelType } from "@/features/stations/types";
 import { fuelForModel } from "@/features/vehicle/profile";
 import { interpolate, t } from "@/lib/i18n";
+import { clearPlannedDestination } from "@/lib/planned-trip";
 import { useSession } from "@/lib/session";
 import { fetchStationsSnapshot } from "@/lib/stations-api";
 import { useVehicleStore } from "@/lib/vehicle-store";
@@ -21,7 +22,7 @@ import { StorageNotice } from "./StorageNotice";
 import { PriceLegend } from "./PriceLegend";
 import { StationSheet } from "./StationSheet";
 import { AccountChip } from "./AccountChip";
-import { CalculateChip, VehicleChip } from "./VehicleChip";
+import { CalculateChip, PlanTripChip, VehicleChip } from "./VehicleChip";
 import type { Selection } from "./station-map/StationMap";
 import { useRankedStations } from "./useRankedStations";
 
@@ -88,6 +89,10 @@ export function HomeView() {
   const changeOrigin = useCallback((next: Origin | null) => {
     setOrigin(next);
     setSelection(null);
+    // A street address: 2 km is enough (and readable) in a city. A town or a
+    // postal area covers more ground: back to 10 km if we were at 2.
+    if (next?.precise) setRadiusKm(2);
+    else if (next && !next.fromDevice) setRadiusKm((radius) => (radius === 2 ? 10 : radius));
   }, []);
 
   return (
@@ -154,6 +159,7 @@ export function HomeView() {
 
         <div className="pointer-events-auto flex flex-wrap gap-2 self-start">
           {signedIn ? <VehicleChip /> : <CalculateChip />}
+          <PlanTripChip />
           <AccountChip />
         </div>
 
@@ -201,7 +207,10 @@ export function HomeView() {
         </div>
       </div>
 
-      {selected && <StationSheet station={selected} fuel={fuel} onClose={closeSheet} />}
+      {selected && (
+        // A trip started from the map isn't part of an earlier plan: don't offer to continue to its destination.
+        <StationSheet station={selected} fuel={fuel} onClose={closeSheet} onGo={clearPlannedDestination} />
+      )}
     </main>
   );
 }

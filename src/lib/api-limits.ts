@@ -22,6 +22,12 @@ export const API_LIMITS = {
   detours: limits(30, 600),
   // Start of a trip + reroutes (at most 1 per 15 s on the phone): 4/min in practice.
   itineraire: limits(10, 300),
+  // Address autocomplete: the field waits for a pause in typing, so ~1 request
+  // per word typed; 40/min leaves room for a few corrections.
+  adresses: limits(40, 600),
+  // Planning a trip: one route + one detour request per plan (or fuel change).
+  parcours: limits(10, 300),
+  parcoursDetours: limits(10, 300),
 };
 
 /** null when the request may go on; otherwise the 429 answer to send. */

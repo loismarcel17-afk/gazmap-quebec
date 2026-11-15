@@ -8,6 +8,7 @@ import { FUEL_TYPES, type FuelType } from "@/features/stations/types";
 import { fetchStationPrices, submitFillUp, type FillUpAnswer } from "@/lib/feedback-api";
 import { formatPrice } from "@/lib/format";
 import { interpolate, t } from "@/lib/i18n";
+import { usePlannedDestination } from "@/lib/planned-trip";
 import { useSession } from "@/lib/session";
 
 type Step = "question" | "details" | "thanksYes" | "thanksNo";
@@ -36,6 +37,8 @@ export function FeedbackCard({
     queryFn: () => fetchStationPrices(stationId),
   });
   const [step, setStep] = useState<Step>("question");
+  // A planned trip (signed in): after the fill-up, guidance goes on to the destination.
+  const planned = usePlannedDestination();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const label = station.data?.brand ?? station.data?.name ?? t.station.unnamed;
@@ -106,6 +109,12 @@ export function FeedbackCard({
                 {t.feedback.accountLink}
               </Link>
             </p>
+          )}
+          {planned && session.status === "signedIn" && (
+            <Link href="/destination" className={`${PRIMARY} mt-4 flex flex-col items-center justify-center px-4 py-2 text-center`}>
+              <span>{interpolate(t.planner.continueTo, { place: planned.label })}</span>
+              <span className="text-sm font-normal">{t.planner.continueHint}</span>
+            </Link>
           )}
         </section>
       )}

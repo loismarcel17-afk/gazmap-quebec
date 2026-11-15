@@ -5,7 +5,8 @@ import type { NearbyStation } from "@/features/stations/nearby";
 import { formatDistance, formatInteger, formatMoney, formatPrice } from "@/lib/format";
 import { interpolate, plural, t } from "@/lib/i18n";
 
-export const RADIUS_OPTIONS_KM = [5, 10, 25, 50] as const;
+// 2 km: a street address in Montréal or Québec already has a dozen stations around it.
+export const RADIUS_OPTIONS_KM = [2, 5, 10, 25, 50] as const;
 export type RadiusKm = (typeof RADIUS_OPTIONS_KM)[number];
 
 /** Long lists cost render time on phones and nobody scrolls past the 50 best. */

@@ -46,10 +46,10 @@
     "pricier": "Plus cher"
   },
   "search": {
-    "label": "Ville ou code postal",
-    "placeholder": "Ville ou code postal",
+    "label": "Adresse, ville ou code postal",
+    "placeholder": "Adresse, ville ou code postal",
     "suggestions": "Suggestions",
-    "noResult": "Aucune ville ni code postal trouvé",
+    "noResult": "Aucun résultat. Essayez une adresse, une ville ou un code postal.",
     "clear": "Effacer la recherche",
     "locate": "Me localiser",
     "locating": "Localisation en cours…",
@@ -60,10 +60,14 @@
       "other": "{count} stations"
     },
     "errors": {
-      "denied": "Localisation refusée. Entrez plutôt une ville ou un code postal.",
-      "unavailable": "Position introuvable. Entrez plutôt une ville ou un code postal.",
-      "unsupported": "Votre navigateur ne permet pas la localisation. Entrez une ville ou un code postal."
-    }
+      "denied": "Localisation refusée. Entrez plutôt une adresse, une ville ou un code postal.",
+      "unavailable": "Position introuvable. Entrez plutôt une adresse, une ville ou un code postal.",
+      "unsupported": "Votre navigateur ne permet pas la localisation. Entrez une adresse, une ville ou un code postal."
+    },
+    "addressTag": "Adresse",
+    "searchingAddresses": "Recherche d'adresses…",
+    "addressUnavailable": "Recherche d'adresse indisponible pour l'instant : choisissez une ville ou un code postal.",
+    "addressSource": "Adresses : © Mapbox"
   },
   "nearby": {
     "title": "Près de {place}",
@@ -361,13 +365,15 @@
           "title": "Sans compte",
           "paragraphs": [
             "Votre position sert seulement à trouver les stations proches, sur votre appareil. Pour le calcul du plein (avec un compte) et le guidage, elle est envoyée à notre serveur, puis à Mapbox pour le calcul des itinéraires, sans être enregistrée. Pendant un guidage, seules la position de départ et celle d'un recalcul sont envoyées.",
+            "La recherche de villes et de codes postaux se fait sur votre appareil. Quand vous tapez une adresse (un numéro ou un nom de rue), le texte tapé est envoyé à notre serveur, puis à Mapbox pour trouver l'adresse, sans être enregistré ni journalisé.",
             "Votre véhicule (modèle, réservoir, niveau) est enregistré sur votre appareil seulement."
           ]
         },
         {
           "title": "Avec un compte",
           "paragraphs": [
-            "Nous conservons votre adresse courriel et l'historique horodaté de vos consentements (conditions d'utilisation, statistiques)."
+            "Nous conservons votre adresse courriel et l'historique horodaté de vos consentements (conditions d'utilisation, statistiques).",
+            "Pour planifier un trajet, le départ, la destination et l'adresse que vous tapez sont envoyés à notre serveur, puis à Mapbox pour trouver l'adresse et calculer l'itinéraire et les détours. Ils ne sont ni enregistrés sur notre serveur ni journalisés. La destination est gardée sur votre appareil seulement, au plus 12 heures, pour vous proposer de continuer le trajet après le plein."
           ]
         },
         {
@@ -398,7 +404,7 @@
           "title": "Témoins et stockage sur votre appareil",
           "paragraphs": [
             "Ce site n'utilise aucun témoin (cookie) publicitaire, aucun outil de mesure d'audience et aucun script de tiers servant à vous suivre. Il n'a donc pas besoin de vous demander un consentement pour des témoins non essentiels. Si cela devait changer, ces outils resteraient désactivés tant que vous ne les auriez pas acceptés.",
-            "Il enregistre seulement, dans le stockage de votre navigateur, ce qui est nécessaire à son fonctionnement : votre profil de véhicule (s'il est rempli), votre session de connexion (si vous avez un compte), le trajet en cours (effacé après 2 heures au plus) et le fait que vous avez lu cet avis.",
+            "Il enregistre seulement, dans le stockage de votre navigateur, ce qui est nécessaire à son fonctionnement : votre profil de véhicule (s'il est rempli), votre session de connexion (si vous avez un compte), le trajet en cours (effacé après 2 heures au plus), la destination d'un trajet planifié (effacée après 12 heures au plus) et le fait que vous avez lu cet avis.",
             "Pour fonctionner hors ligne, le site garde aussi une copie de ses propres pages et fichiers. Les itinéraires, les positions et les données de votre compte n'en font jamais partie.",
             "Lors de la connexion seulement, une vérification anti-robot de Cloudflare (Turnstile) s'assure qu'une personne demande le code. Cloudflare reçoit alors des informations techniques sur votre navigateur, sans témoin publicitaire ni suivi d'un site à l'autre. Elle n'est jamais chargée sur la carte.",
             "Les fonds de carte proviennent d'OpenFreeMap : comme pour tout site, votre navigateur leur transmet votre adresse IP pour les télécharger, mais jamais votre position ni votre identité. Vous pouvez effacer toutes ces données à tout moment dans les réglages de votre navigateur."
@@ -425,5 +431,50 @@
     "confirmClear": "Confirmer l'effacement de tous mes trajets",
     "cancelClear": "Annuler",
     "clearError": "Impossible d'effacer l'historique. Réessayez."
+  },
+  "planner": {
+    "title": "Planifier un trajet",
+    "chip": "Planifier un trajet",
+    "intro": "Indiquez votre départ et votre destination : GazMap trouve la station la plus avantageuse sur la route ou à l'arrivée.",
+    "signInRequired": "La planification de trajet est réservée aux comptes. Connectez-vous pour trouver les meilleures stations sur votre route.",
+    "signInCta": "Se connecter",
+    "backToMap": "Retour à la carte",
+    "from": "Départ",
+    "to": "Destination",
+    "myPosition": "Ma position",
+    "useMyPosition": "Partir de ma position",
+    "locating": "Recherche de votre position…",
+    "addressPlaceholder": "Adresse, ville ou code postal",
+    "addressSuggestions": "Adresses suggérées",
+    "addressSearching": "Recherche…",
+    "addressNoResult": "Aucune adresse trouvée au Québec.",
+    "addressUnavailable": "La recherche d'adresse est indisponible pour l'instant. Réessayez plus tard.",
+    "clear": "Effacer",
+    "privacy": "Le départ, la destination et l'adresse tapée servent seulement au calcul (envoyés à Mapbox) ; ils ne sont jamais enregistrés.",
+    "question": "Où voulez-vous faire le plein ?",
+    "onTheWay": "En chemin",
+    "onTheWayHint": "Les stations le long de votre route, détour compris",
+    "atDestination": "À destination",
+    "atDestinationHint": "Les stations autour de votre destination",
+    "routing": "Calcul de l'itinéraire…",
+    "routeUnavailable": "Impossible de calculer l'itinéraire pour l'instant. Vérifiez les adresses ou réessayez plus tard.",
+    "routeSummary": "{distance} · {duration} sans arrêt",
+    "onTheWayTitle": "Sur la route vers {place}",
+    "atDestinationTitle": "Près de {place}",
+    "onTheWaySummary": {
+      "one": "{count} station à moins de 3 km de la route",
+      "other": "{count} stations à moins de 3 km de la route, classées par coût total du plein"
+    },
+    "onTheWayEmpty": "Aucune station ne vend ce carburant à moins de 3 km de cette route. Essayez « À destination ».",
+    "detour": "détour {distance}",
+    "noDetour": "sur la route",
+    "breakdown": "{litres} L à {price} + détour {detour} ({distance} de plus que la route directe)",
+    "detourRoad": "Détours mesurés par la route : trajet via la station moins trajet direct.",
+    "detourEstimated": "Détours estimés d'après la distance à la route ; calcul exact en cours ou indisponible.",
+    "continueTo": "Continuer vers {place}",
+    "continueHint": "Guidage jusqu'à votre destination",
+    "destinationTitle": "Vers {place}",
+    "arrived": "Vous voici à destination. Bonne journée !",
+    "change": "Modifier le trajet"
   }
 }

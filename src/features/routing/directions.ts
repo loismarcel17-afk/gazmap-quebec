@@ -56,6 +56,18 @@ export function directionsUrl(origin: LatLng, destination: LatLng, token: string
   return `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${point(origin)};${point(destination)}?${params}`;
 }
 
+/**
+ * Route line A → B for planning a trip (/api/parcours): no instructions, the
+ * full line (simplified on our server, routing/simplify.ts: Mapbox's
+ * "simplified" overview is far too coarse for a corridor). "driving", not
+ * "driving-traffic": the trip may be planned hours ahead.
+ */
+export function routeOverviewUrl(origin: LatLng, destination: LatLng, token: string): string {
+  const point = ({ lat, lng }: LatLng) => `${lng.toFixed(5)},${lat.toFixed(5)}`;
+  const params = new URLSearchParams({ geometries: "geojson", overview: "full", access_token: token });
+  return `https://api.mapbox.com/directions/v5/mapbox/driving/${point(origin)};${point(destination)}?${params}`;
+}
+
 /** Mapbox response → Route, or throws if it isn't a usable route. */
 export function parseDirections(response: unknown): Route {
   const body = asObject(response);

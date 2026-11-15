@@ -1,6 +1,6 @@
 "use client";
 
-import type { Feature, FeatureCollection, Point, Polygon } from "geojson";
+import type { Feature, FeatureCollection, LineString, Point, Polygon } from "geojson";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import MapView, {
@@ -15,6 +15,7 @@ import MapView, {
   type MapRef,
 } from "react-map-gl/maplibre";
 import { boundsAround, circleRing, type LatLng } from "@/features/geo/geo";
+import type { Position } from "@/features/navigation/geometry";
 import type { PriceScale } from "@/features/stations/price-scale";
 import type { FuelType, Station } from "@/features/stations/types";
 import { formatPrice } from "@/lib/format";
@@ -28,6 +29,8 @@ import {
   hitLayer,
   radiusFillLayer,
   radiusLineLayer,
+  routeCasingLayer,
+  routeLineLayer,
   selectedLayer,
   stationsLayer,
 } from "./layers";
@@ -46,7 +49,10 @@ interface StationMapProps {
   selection: Selection | null;
   onSelect: (id: string | null) => void;
   origin: LatLng | null;
+  /** Search circle around `origin`; 0 = no circle */
   radiusMeters: number;
+  /** Planned trip (planner page): its line and destination, framed instead of the circle */
+  route?: { geometry: Position[]; destination: LatLng } | null;
 }
 
 interface FeatureProps {
@@ -62,6 +68,7 @@ export default function StationMap({
   onSelect,
   origin,
   radiusMeters,
+  route = null,
 }: StationMapProps) {
   // A ref gives access to the MapLibre map itself, to move the camera from code.
   const mapRef = useRef<MapRef>(null);
@@ -89,11 +96,13 @@ export default function StationMap({
 
   const radiusShape = useMemo<Feature<Polygon> | null>(
     () =>
-      origin && {
-        type: "Feature",
-        geometry: { type: "Polygon", coordinates: [circleRing(origin, radiusMeters)] },
-        properties: {},
-      },
+      origin && radiusMeters > 0
+        ? {
+            type: "Feature",
+            geometry: { type: "Polygon", coordinates: [circleRing(origin, radiusMeters)] },
+            properties: {},
+          }
+        : null,
     [origin, radiusMeters],
   );
 
@@ -104,14 +113,22 @@ export default function StationMap({
   const hovered = hoveredId ? stationsById.get(hoveredId) : undefined;
   const hoveredPrice = hovered?.prices[fuel];
 
-  // New search area → frame the whole circle.
+  const routeShape = useMemo<Feature<LineString> | null>(
+    () => route && { type: "Feature", geometry: { type: "LineString", coordinates: route.geometry }, properties: {} },
+    [route],
+  );
+
+  // New search area → frame the whole circle; a new planned trip → frame the
+  // trip, unless the circle around the destination is what's being looked at.
   useEffect(() => {
-    if (!origin) return;
-    mapRef.current?.fitBounds(boundsAround(origin, radiusMeters), {
-      padding: freeArea(false),
-      duration: 800,
-    });
-  }, [origin, radiusMeters]);
+    const map = mapRef.current;
+    if (!map) return;
+    if (origin && radiusMeters > 0) {
+      map.fitBounds(boundsAround(origin, radiusMeters), { padding: freeArea(false), duration: 800 });
+    } else if (route) {
+      map.fitBounds(lineBounds(route.geometry), { padding: freeArea(false), duration: 800 });
+    }
+  }, [origin, radiusMeters, route]);
 
   // Station picked in the list → bring it into view, above the station sheet.
   useEffect(() => {
@@ -156,6 +173,23 @@ export default function StationMap({
         </Source>
       )}
 
+      {routeShape && (
+        <Source id="planned-route" type="geojson" data={routeShape}>
+          <Layer {...routeCasingLayer} beforeId={STATIONS_LAYER_ID} />
+          <Layer {...routeLineLayer} beforeId={STATIONS_LAYER_ID} />
+        </Source>
+      )}
+
+      {route && (
+        <Marker longitude={route.destination.lng} latitude={route.destination.lat} anchor="bottom">
+          {/* Flag pin: where the trip ends. */}
+          <svg aria-hidden viewBox="0 0 24 32" className="h-8 w-6 drop-shadow">
+            <path d="M12 31s10-11.2 10-19A10 10 0 0 0 2 12c0 7.8 10 19 10 19z" fill="#1d4ed8" stroke="#fff" strokeWidth="2" />
+            <circle cx="12" cy="12" r="4" fill="#fff" />
+          </svg>
+        </Marker>
+      )}
+
       {origin && (
         <Marker longitude={origin.lng} latitude={origin.lat} anchor="center">
           <span aria-hidden className="block size-4 rounded-full bg-zinc-950 shadow-md ring-4 ring-white" />
@@ -180,6 +214,16 @@ export default function StationMap({
       <AttributionControl position="bottom-right" compact customAttribution={t.map.source} />
     </MapView>
   );
+}
+
+/** Bounding box of a line: [[west, south], [east, north]] */
+function lineBounds(geometry: Position[]): [[number, number], [number, number]] {
+  const lngs = geometry.map(([lng]) => lng);
+  const lats = geometry.map(([, lat]) => lat);
+  return [
+    [Math.min(...lngs), Math.min(...lats)],
+    [Math.max(...lngs), Math.max(...lats)],
+  ];
 }
 
 /** Like MapLibre's PaddingOptions, but every side is required. */

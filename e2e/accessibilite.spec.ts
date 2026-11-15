@@ -12,6 +12,9 @@ const PAGES = [
   { path: "/hors-ligne", ready: null },
   { path: "/trajet/demo-station", ready: /Avant de partir/ },
   { path: "/retour/demo-station?carburant=ordinaire", ready: /Avez-vous fait le plein/ },
+  // Signed out (as in these tests): the sign-in invitation of the account-only pages.
+  { path: "/planifier", ready: /réservée aux comptes/ },
+  { path: "/destination", ready: /réservée aux comptes/ },
 ];
 
 // The demo station, as Supabase would return it (one object or a list).

@@ -8,7 +8,7 @@ import type { FuelType } from "@/features/stations/types";
 import { maneuverIcon } from "@/features/navigation/maneuver-icon";
 import { formatClock, formatDistance, formatDuration } from "@/lib/format";
 import { interpolate, t } from "@/lib/i18n";
-import type { FallbackReason, GuidanceSnapshot } from "@/lib/navigation/guidance-controller";
+import type { FallbackReason, GuidanceController, GuidanceSnapshot } from "@/lib/navigation/guidance-controller";
 import { fetchStationLocation } from "@/lib/station-location";
 import { startTrip } from "@/lib/trips-api";
 import { ExternalNavLinks } from "./ExternalNavLinks";
@@ -18,7 +18,7 @@ import { useGuidance, useGuidanceSupported } from "./useGuidance";
 // MapLibre needs the browser: client-only, in its own chunk.
 const GuidanceMap = dynamic(() => import("./GuidanceMap"), { ssr: false });
 
-const BIG_BUTTON =
+export const BIG_BUTTON =
   "flex min-h-14 items-center justify-center rounded-2xl px-5 text-lg font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700";
 
 export function TripScreen({ stationId, fuel }: { stationId: string; fuel: FuelType }) {
@@ -54,19 +54,44 @@ function Guidance({
   fuel: FuelType;
   label: string;
 }) {
-  const supported = useGuidanceSupported();
   const { snapshot, controller } = useGuidance(stationId, station, fuel);
-  // "J'y vais" through Waze / Google Maps: recorded for signed-in users (fire and forget).
-  const recordExternalTrip = () => void startTrip(stationId, fuel, "external");
+  return (
+    <GuidanceView
+      title={interpolate(t.navigation.title, { station: label })}
+      target={station}
+      snapshot={snapshot}
+      controller={controller}
+      // "J'y vais" through Waze / Google Maps: recorded for signed-in users (fire and forget).
+      onOpenApp={() => void startTrip(stationId, fuel, "external")}
+    />
+  );
+}
+
+/** The guidance screen, whatever the target: a station, or the destination of a planned trip. */
+export function GuidanceView({
+  title,
+  target,
+  snapshot,
+  controller,
+  onOpenApp,
+}: {
+  title: string;
+  target: LatLng;
+  snapshot: GuidanceSnapshot;
+  controller: GuidanceController;
+  onOpenApp?: () => void;
+}) {
+  const supported = useGuidanceSupported();
   const fallback: FallbackReason | null = supported === false ? "unsupported" : snapshot.fallbackReason;
   const driving = !fallback && snapshot.phase !== "notice";
+  const recordExternalTrip = onOpenApp ?? (() => {});
 
   return (
     <main className="relative h-dvh w-full overflow-hidden bg-zinc-200">
-      <h1 className="sr-only">{interpolate(t.navigation.title, { station: label })}</h1>
+      <h1 className="sr-only">{title}</h1>
 
       <GuidanceMap
-        station={station}
+        station={target}
         geometry={snapshot.geometry}
         position={snapshot.position}
         bearing={snapshot.bearing}
@@ -82,19 +107,19 @@ function Guidance({
 
       <div className="absolute inset-x-0 bottom-0 z-10 rounded-t-3xl bg-white p-4 pb-6 shadow-2xl">
         {fallback ? (
-          <FallbackPanel reason={fallback} station={station} onOpenApp={recordExternalTrip} />
+          <FallbackPanel reason={fallback} station={target} onOpenApp={recordExternalTrip} />
         ) : snapshot.phase === "notice" ? (
           <SafetyNotice
-            label={label}
+            title={title}
             resumable={snapshot.resumable}
             onStart={() => void controller.start()}
-            station={station}
+            station={target}
             onOpenApp={recordExternalTrip}
           />
         ) : (
           <TripPanel
             snapshot={snapshot}
-            station={station}
+            station={target}
             onStop={controller.stop}
             onToggleMute={controller.toggleMute}
           />
@@ -134,13 +159,13 @@ function StatusLine({ snapshot }: { snapshot: GuidanceSnapshot }) {
 
 /** Short, non-blocking safety message before starting (CLAUDE.md, Code de la sécurité routière). */
 function SafetyNotice({
-  label,
+  title,
   resumable,
   onStart,
   station,
   onOpenApp,
 }: {
-  label: string;
+  title: string;
   resumable: boolean;
   onStart: () => void;
   station: LatLng;
@@ -148,7 +173,7 @@ function SafetyNotice({
 }) {
   return (
     <section aria-labelledby="safety-title" className="flex flex-col gap-3">
-      <p className="text-sm font-medium text-zinc-600">{interpolate(t.navigation.title, { station: label })}</p>
+      <p className="text-sm font-medium text-zinc-600">{title}</p>
       <h2 id="safety-title" className="text-xl font-bold text-zinc-950">
         {t.navigation.safety.title}
       </h2>
@@ -246,7 +271,7 @@ function SpeakerIcon({ muted }: { muted: boolean }) {
   );
 }
 
-function CenteredMessage({ children }: { children: React.ReactNode }) {
+export function CenteredMessage({ children }: { children: React.ReactNode }) {
   return (
     <main className="flex h-dvh flex-col items-center justify-center p-6 text-center text-lg text-zinc-800">
       {children}

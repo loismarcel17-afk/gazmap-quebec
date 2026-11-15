@@ -6,9 +6,16 @@ import type { LatLng } from "@/features/geo/geo";
 /** Mapbox Matrix "driving" profile: at most 25 coordinates, so origin + 24 stations. */
 export const MAX_DESTINATIONS = 24;
 
+/** A station sent by the browser: only what routing needs. */
+export interface CandidateStation {
+  id: string;
+  lat: number;
+  lng: number;
+}
+
 export interface DetourRequest {
   origin: LatLng;
-  stations: { id: string; lat: number; lng: number }[];
+  stations: CandidateStation[];
 }
 
 /** One-way road distance in meters per station id; null = no road route found. */
@@ -19,24 +26,34 @@ const isLat = (value: unknown): value is number =>
 const isLng = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value) && value >= -180 && value <= 180;
 
+/** { lat, lng } with valid numbers, or null. */
+export function parsePoint(value: unknown): LatLng | null {
+  if (typeof value !== "object" || value === null) return null;
+  const { lat, lng } = value as Record<string, unknown>;
+  return isLat(lat) && isLng(lng) ? { lat, lng } : null;
+}
+
+/** 1 to `max` stations with an id and valid coordinates, or null. */
+export function parseStations(value: unknown, max: number): CandidateStation[] | null {
+  if (!Array.isArray(value) || value.length === 0 || value.length > max) return null;
+  const parsed: CandidateStation[] = [];
+  for (const station of value) {
+    if (typeof station !== "object" || station === null) return null;
+    const { id } = station as Record<string, unknown>;
+    const position = parsePoint(station);
+    if (typeof id !== "string" || id.length === 0 || id.length > 64 || !position) return null;
+    parsed.push({ id, ...position });
+  }
+  return parsed;
+}
+
 /** Validates the browser's request body: anything can be POSTed to a public API route. */
 export function parseDetourRequest(body: unknown): DetourRequest | null {
   if (typeof body !== "object" || body === null) return null;
   const { origin, stations } = body as Record<string, unknown>;
-  if (typeof origin !== "object" || origin === null) return null;
-  const { lat, lng } = origin as Record<string, unknown>;
-  if (!isLat(lat) || !isLng(lng)) return null;
-  if (!Array.isArray(stations) || stations.length === 0 || stations.length > MAX_DESTINATIONS) return null;
-
-  const parsed: DetourRequest["stations"] = [];
-  for (const station of stations) {
-    if (typeof station !== "object" || station === null) return null;
-    const { id, lat: stationLat, lng: stationLng } = station as Record<string, unknown>;
-    if (typeof id !== "string" || id.length === 0 || id.length > 64) return null;
-    if (!isLat(stationLat) || !isLng(stationLng)) return null;
-    parsed.push({ id, lat: stationLat, lng: stationLng });
-  }
-  return { origin: { lat, lng }, stations: parsed };
+  const position = parsePoint(origin);
+  const candidates = parseStations(stations, MAX_DESTINATIONS);
+  return position && candidates ? { origin: position, stations: candidates } : null;
 }
 
 /**

@@ -1,13 +1,20 @@
 // @vitest-environment jsdom
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Place } from "@/features/places/places";
-import { LocationSearch } from "./LocationSearch";
+
+const searchAddresses = vi.fn();
+vi.mock("@/lib/planner-api", () => ({ searchAddresses: (...args: unknown[]) => searchAddresses(...args) }));
+
+const { LocationSearch } = await import("./LocationSearch");
 
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  searchAddresses.mockReset();
 });
+beforeEach(() => searchAddresses.mockResolvedValue([]));
 
 const PLACES: Place[] = [
   { kind: "city", key: "rimouski", label: "Rimouski", lat: 48.45, lng: -68.52, stationCount: 12 },
@@ -17,8 +24,12 @@ const PLACES: Place[] = [
 
 function setup() {
   const onOriginChange = vi.fn();
-  render(<LocationSearch places={PLACES} onOriginChange={onOriginChange} />);
-  return { onOriginChange, input: screen.getByRole("combobox", { name: "Ville ou code postal" }) };
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <LocationSearch places={PLACES} onOriginChange={onOriginChange} />
+    </QueryClientProvider>,
+  );
+  return { onOriginChange, input: screen.getByRole("combobox", { name: "Adresse, ville ou code postal" }) };
 }
 
 /** Replace navigator.geolocation for one test. */
@@ -42,7 +53,7 @@ describe("LocationSearch", () => {
     expect(options[1].getAttribute("aria-selected")).toBe("true");
     fireEvent.keyDown(input, { key: "Enter" });
 
-    expect(onOriginChange).toHaveBeenCalledWith({ lat: 45.48, lng: -74.3, label: "Rigaud", fromDevice: false });
+    expect(onOriginChange).toHaveBeenCalledWith({ lat: 45.48, lng: -74.3, label: "Rigaud", fromDevice: false, precise: false });
     expect((input as HTMLInputElement).value).toBe("Rigaud");
     expect(screen.queryByRole("listbox")).toBeNull();
   });
@@ -54,10 +65,14 @@ describe("LocationSearch", () => {
     expect(onOriginChange).toHaveBeenCalledWith(expect.objectContaining({ label: "Montréal" }));
   });
 
-  it("says so when nothing matches", () => {
+  it("says so when nothing matches, not even an address", async () => {
     const { input } = setup();
     fireEvent.change(input, { target: { value: "zzz" } });
-    expect(screen.getByText("Aucune ville ni code postal trouvé")).toBeDefined();
+    expect(
+      await screen.findByText("Aucun résultat. Essayez une adresse, une ville ou un code postal.", {}, { timeout: 2000 }),
+    ).toBeDefined();
+    // Nothing local matched: the address search was tried.
+    expect(searchAddresses).toHaveBeenCalledWith("zzz", null);
   });
 
   it("clears the search and the origin", () => {
@@ -89,8 +104,35 @@ describe("LocationSearch", () => {
     fireEvent.click(screen.getByRole("button", { name: "Me localiser" }));
 
     expect(
-      await screen.findByText("Localisation refusée. Entrez plutôt une ville ou un code postal."),
+      await screen.findByText("Localisation refusée. Entrez plutôt une adresse, une ville ou un code postal."),
     ).toBeDefined();
     expect(onOriginChange).not.toHaveBeenCalled();
+  });
+
+  it("finds a street address through Mapbox, and asks for a small radius", async () => {
+    searchAddresses.mockResolvedValue([{ lat: 45.5231, lng: -73.5817, label: "4500 Rue Saint-Denis, Montréal, Québec H2J 2L3" }]);
+    const { onOriginChange, input } = setup();
+
+    fireEvent.change(input, { target: { value: "4500 rue Saint-Denis" } });
+    const option = await screen.findByRole("option", { name: /4500 Rue Saint-Denis/ }, { timeout: 2000 });
+    expect(searchAddresses).toHaveBeenCalledWith("4500 rue Saint-Denis", null);
+    expect(screen.getByText("Adresses : © Mapbox")).toBeDefined();
+
+    fireEvent.click(option);
+    expect(onOriginChange).toHaveBeenCalledWith({
+      lat: 45.5231,
+      lng: -73.5817,
+      label: "4500 Rue Saint-Denis, Montréal, Québec H2J 2L3",
+      fromDevice: false,
+      precise: true,
+    });
+  });
+
+  it("keeps town searches on the device: no Mapbox call for 'Rimouski'", async () => {
+    const { input } = setup();
+    fireEvent.change(input, { target: { value: "Rimouski" } });
+    await new Promise((resolve) => setTimeout(resolve, 600)); // past the typing pause
+    expect(screen.getAllByRole("option")).toHaveLength(1);
+    expect(searchAddresses).not.toHaveBeenCalled();
   });
 });

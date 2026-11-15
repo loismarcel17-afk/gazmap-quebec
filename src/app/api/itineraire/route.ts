@@ -2,10 +2,17 @@
 // the user's position to a station. Called at the start of a trip and on reroutes
 // only: positions during guidance never leave the phone.
 //
-// The station comes by id and is looked up here, so this route (and our Mapbox
-// token) can only be used to reach a gas station, not for arbitrary trips.
+// Two kinds of target:
+// - a station, by id, looked up here: open to everyone, and our Mapbox token can
+//   only be used to reach a gas station;
+// - a free destination ({ lat, lng }): the last leg of a planned trip, after the
+//   fill-up (PLAN.md task 18). Signed-in users only, so the token can't serve as
+//   a free routing service for anonymous scripts.
 // Coordinates and the token are never logged.
+import type { LatLng } from "@/features/geo/geo";
 import { directionsUrl, parseDirections } from "@/features/routing/directions";
+import { parsePoint } from "@/features/routing/matrix";
+import { signedInUser } from "@/lib/api-auth";
 import { fetchStationLocation } from "@/lib/station-location";
 import { API_LIMITS, rateLimited } from "@/lib/api-limits";
 
@@ -19,14 +26,16 @@ export async function POST(request: Request): Promise<Response> {
   const input = parseRouteRequest(await request.json().catch(() => null));
   if (!input) return json({ error: "invalid_request" }, 400);
 
+  if ("destination" in input && !(await signedInUser(request))) return json({ error: "sign_in_required" }, 401);
+
   const token = process.env.MAPBOX_DIRECTIONS_TOKEN;
   if (!token) return json({ error: "routing_unavailable" }, 503);
 
   try {
-    const station = await fetchStationLocation(input.stationId);
-    if (!station) return json({ error: "station_not_found" }, 404);
+    const target = "destination" in input ? input.destination : await fetchStationLocation(input.stationId);
+    if (!target) return json({ error: "station_not_found" }, 404);
 
-    const response = await fetch(directionsUrl(input.origin, station, token, input.heading), {
+    const response = await fetch(directionsUrl(input.origin, target, token, input.heading), {
       signal: AbortSignal.timeout(TIMEOUT_MS),
       cache: "no-store",
     });
@@ -41,31 +50,23 @@ export async function POST(request: Request): Promise<Response> {
   }
 }
 
-interface RouteRequest {
-  origin: { lat: number; lng: number };
-  stationId: string;
+type RouteRequest = {
+  origin: LatLng;
   /** Current direction of travel (degrees), sent on reroutes */
   heading?: number;
-}
+} & ({ stationId: string } | { destination: LatLng });
 
 function parseRouteRequest(body: unknown): RouteRequest | null {
   if (typeof body !== "object" || body === null) return null;
-  const { origin, stationId, heading } = body as Record<string, unknown>;
-  if (typeof origin !== "object" || origin === null) return null;
-  const { lat, lng } = origin as Record<string, unknown>;
-  const valid =
-    typeof lat === "number" &&
-    typeof lng === "number" &&
-    Number.isFinite(lat) &&
-    Number.isFinite(lng) &&
-    Math.abs(lat) <= 90 &&
-    Math.abs(lng) <= 180 &&
-    typeof stationId === "string" &&
-    stationId.length > 0 &&
-    stationId.length <= 64;
-  if (!valid) return null;
+  const { origin, stationId, destination, heading } = body as Record<string, unknown>;
+  const start = parsePoint(origin);
+  if (!start) return null;
   const validHeading = typeof heading === "number" && Number.isFinite(heading) ? ((heading % 360) + 360) % 360 : undefined;
-  return { origin: { lat, lng }, stationId, heading: validHeading };
+  if (typeof stationId === "string" && stationId.length > 0 && stationId.length <= 64) {
+    return { origin: start, stationId, heading: validHeading };
+  }
+  const end = stationId === undefined ? parsePoint(destination) : null;
+  return end ? { origin: start, destination: end, heading: validHeading } : null;
 }
 
 function json(body: unknown, status = 200): Response {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { NearbyStation } from "@/features/stations/nearby";
 import type { Station } from "@/features/stations/types";
-import { rankByTotalCost, roadCircuity } from "./rank";
+import { rankAlongRoute, rankByTotalCost, roadCircuity } from "./rank";
 
 function nearby(id: string, price: number, distanceMeters: number, sponsored = false): NearbyStation {
   const station: Station = {
@@ -111,5 +111,36 @@ describe("roadCircuity", () => {
 
   it("is never below 1 (a road can't beat the straight line)", () => {
     expect(roadCircuity([nearby("a", 1, 1_000)], { a: 990 })).toBe(1);
+  });
+});
+
+describe("rankAlongRoute", () => {
+  it("prefers a station on the way to a slightly cheaper one off the highway", () => {
+    // 40 L at 9.5 L/100 km. "exit" is 2 ¢/L cheaper (0,80 $) but 4 km off the
+    // line: ~11 km of detour ≈ 1,90 $.
+    const ranked = rankAlongRoute([nearby("on-the-way", 1859, 100), nearby("exit", 1839, 4_000)]);
+    expect(ids(ranked)).toEqual(["on-the-way", "exit"]);
+    expect(ranked.every((entry) => entry.detourSource === "estimated")).toBe(true);
+  });
+
+  it("uses A → station → B minus A → B when road distances are known", () => {
+    const ranked = rankAlongRoute([nearby("a", 1859, 100), nearby("b", 1849, 3_000)], {}, {
+      directMeters: 250_000,
+      // "a" looks close but needs a U-turn (+6 km); "b" is right at an exit (+0,5 km).
+      viaMeters: { a: 256_000, b: 250_500 },
+    });
+    expect(ids(ranked)).toEqual(["b", "a"]);
+    expect(ranked[0].detourSource).toBe("road");
+    expect(ranked[0].cost.detourMeters).toBe(500);
+  });
+
+  it("never counts a negative detour, and estimates stations without a road answer", () => {
+    const ranked = rankAlongRoute([nearby("shortcut", 1859, 0), nearby("unknown", 1859, 1_000)], {}, {
+      directMeters: 250_000,
+      viaMeters: { shortcut: 249_990, unknown: null },
+    });
+    expect(ranked[0].cost.detourMeters).toBe(0);
+    expect(ranked[1].detourSource).toBe("estimated");
+    expect(ranked[1].cost.detourMeters).toBeCloseTo(2_800);
   });
 });

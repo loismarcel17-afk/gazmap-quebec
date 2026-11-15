@@ -89,4 +89,23 @@ describe("FeedbackCard", () => {
     expect(await screen.findByRole("link", { name: "Créer un compte" })).toBeDefined();
     expect(submitFillUp).not.toHaveBeenCalled();
   });
+
+  it("after the answer, offers to continue to the destination of a planned trip", async () => {
+    window.localStorage.setItem(
+      "gazmap-planned-trip",
+      JSON.stringify({ lat: 46.81, lng: -71.21, label: "Québec", savedAt: Date.now() }),
+    );
+    setup();
+    fireEvent.click(await screen.findByRole("button", { name: "Pas cette fois" }));
+    const link = await screen.findByRole("link", { name: /Continuer vers Québec/ });
+    expect(link.getAttribute("href")).toBe("/destination");
+    window.localStorage.clear();
+  });
+
+  it("offers nothing more without a planned trip", async () => {
+    setup();
+    fireEvent.click(await screen.findByRole("button", { name: "Pas cette fois" }));
+    await screen.findByText("Bonne route !");
+    expect(screen.queryByRole("link", { name: /Continuer vers/ })).toBeNull();
+  });
 });

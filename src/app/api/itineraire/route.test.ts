@@ -4,15 +4,26 @@ import { MONTREAL_DIRECTIONS_RESPONSE, START, STATION } from "@/features/navigat
 // The station lookup reads Supabase: replace it so the test needs no database.
 const fetchStationLocation = vi.fn();
 vi.mock("@/lib/station-location", () => ({ fetchStationLocation: (id: string) => fetchStationLocation(id) }));
+const signedInUser = vi.fn();
+vi.mock("@/lib/api-auth", () => ({ signedInUser: () => signedInUser() }));
 
 const { POST } = await import("./route");
 
+// Each test request from its own address: the per-visitor limit (10/min) isn't what's tested here.
+let client = 0;
 const post = (body: unknown) =>
-  POST(new Request("http://localhost/api/itineraire", { method: "POST", body: JSON.stringify(body) }));
+  POST(
+    new Request("http://localhost/api/itineraire", {
+      method: "POST",
+      headers: { "x-forwarded-for": `198.51.100.${++client}` },
+      body: JSON.stringify(body),
+    }),
+  );
 
 beforeEach(() => {
   vi.stubEnv("MAPBOX_DIRECTIONS_TOKEN", "pk.secret");
   fetchStationLocation.mockResolvedValue({ ...STATION, name: "Station test", brand: "Shell" });
+  signedInUser.mockResolvedValue(null);
 });
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -47,9 +58,31 @@ describe("POST /api/itineraire", () => {
   it.each([
     ["no station id", { origin: START }],
     ["a bad origin", { origin: { lat: "x", lng: 0 }, stationId: "abc" }],
-    ["coordinates instead of a station", { origin: START, destination: STATION }],
+    ["both a station and a destination", { origin: START, stationId: "", destination: STATION }],
+    ["a bad destination", { origin: START, destination: { lat: 91, lng: 0 } }],
   ])("rejects %s", async (_, body) => {
     expect((await post(body)).status).toBe(400);
+  });
+
+  it("refuses a free destination to visitors without an account, before calling Mapbox", async () => {
+    const fetchMock = vi.fn<typeof fetch>();
+    vi.stubGlobal("fetch", fetchMock);
+    const response = await post({ origin: START, destination: STATION });
+    expect(response.status).toBe(401);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("routes signed-in users to their destination (last leg of a planned trip)", async () => {
+    signedInUser.mockResolvedValue("user-1");
+    const fetchMock = vi.fn<typeof fetch>(async () => Response.json(MONTREAL_DIRECTIONS_RESPONSE));
+    vi.stubGlobal("fetch", fetchMock);
+    const destination = { lat: 46.81234, lng: -71.20567 };
+
+    const response = await post({ origin: START, destination });
+
+    expect(response.status).toBe(200);
+    expect(fetchStationLocation).not.toHaveBeenCalled();
+    expect(String(fetchMock.mock.calls[0][0])).toContain("-71.20567,46.81234");
   });
 
   it("answers 404 for an unknown station", async () => {

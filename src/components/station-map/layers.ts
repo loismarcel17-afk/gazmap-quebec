@@ -81,3 +81,18 @@ export function selectedLayer(selectedId: string | null): LayerProps {
     },
   };
 }
+
+/** Planned trip line (planner page): under the stations, white casing for contrast on any basemap. */
+export const routeCasingLayer: LayerProps = {
+  id: "planned-route-casing",
+  type: "line",
+  layout: { "line-join": "round", "line-cap": "round" },
+  paint: { "line-color": "#ffffff", "line-width": 8 },
+};
+
+export const routeLineLayer: LayerProps = {
+  id: "planned-route-line",
+  type: "line",
+  layout: { "line-join": "round", "line-cap": "round" },
+  paint: { "line-color": "#1d4ed8", "line-width": 4 },
+};

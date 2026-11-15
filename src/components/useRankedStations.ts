@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { LatLng } from "@/features/geo/geo";
-import { consumption, litresToBuy } from "@/features/recommendation/fill-up-cost";
+import { consumption, litresToBuy, type VehicleInput } from "@/features/recommendation/fill-up-cost";
 import { rankByTotalCost, type RankedStation } from "@/features/recommendation/rank";
 import { MAX_DESTINATIONS } from "@/features/routing/matrix";
 import type { NearbyStation } from "@/features/stations/nearby";
@@ -27,14 +27,7 @@ export function useRankedStations(
   nearby: NearbyStation[],
   origin: LatLng | null,
 ): { ranked: RankedStation[]; assumptions: FillUpAssumptions } {
-  // Select each field: a fresh object from the selector would re-render on every store change.
-  const model = useVehicleStore((state) => state.model);
-  const tankCapacityL = useVehicleStore((state) => state.tankCapacityL);
-  const currentLevel = useVehicleStore((state) => state.currentLevel);
-  const vehicle = useMemo(
-    () => vehicleInput({ model, tankCapacityL, currentLevel }),
-    [model, tankCapacityL, currentLevel],
-  );
+  const { vehicle, assumptions } = useFillUpVehicle();
 
   const preliminary = useMemo(() => rankByTotalCost(nearby, vehicle), [nearby, vehicle]);
   const candidates = useMemo(() => preliminary.slice(0, MAX_DESTINATIONS).map((entry) => entry.station), [preliminary]);
@@ -52,6 +45,19 @@ export function useRankedStations(
     [road.data, nearby, vehicle, preliminary],
   );
 
+  return { ranked, assumptions };
+}
+
+/** The user's vehicle as the cost formula needs it, and what the list says about it. */
+export function useFillUpVehicle(): { vehicle: VehicleInput; assumptions: FillUpAssumptions } {
+  // Select each field: a fresh object from the selector would re-render on every store change.
+  const model = useVehicleStore((state) => state.model);
+  const tankCapacityL = useVehicleStore((state) => state.tankCapacityL);
+  const currentLevel = useVehicleStore((state) => state.currentLevel);
+  const vehicle = useMemo(
+    () => vehicleInput({ model, tankCapacityL, currentLevel }),
+    [model, tankCapacityL, currentLevel],
+  );
   const assumptions = useMemo<FillUpAssumptions>(
     () => ({
       litres: litresToBuy(vehicle),
@@ -60,6 +66,5 @@ export function useRankedStations(
     }),
     [vehicle, model, tankCapacityL],
   );
-
-  return { ranked, assumptions };
+  return { vehicle, assumptions };
 }

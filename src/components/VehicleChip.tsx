@@ -54,3 +54,21 @@ export function CalculateChip() {
     </Link>
   );
 }
+
+/** "Planifier un trajet": A → B, best stations on the way or at the destination (accounts; the page explains). */
+export function PlanTripChip() {
+  return (
+    <Link
+      href="/planifier"
+      className="flex min-h-11 items-center gap-2 self-start rounded-full bg-white px-4 text-sm font-medium text-zinc-900 shadow-md hover:bg-zinc-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+    >
+      {/* Route icon: two points joined by a path */}
+      <svg aria-hidden viewBox="0 0 24 24" className="size-5 shrink-0 text-blue-700" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="6" cy="18" r="2.5" />
+        <circle cx="18" cy="6" r="2.5" />
+        <path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5" strokeLinecap="round" />
+      </svg>
+      {t.planner.chip}
+    </Link>
+  );
+}

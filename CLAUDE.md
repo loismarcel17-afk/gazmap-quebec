@@ -37,6 +37,8 @@ src/
     retour/[id]/page.tsx  # retour après le plein
     compte/               # connexion, réglages, consentements, suppression
     vehicule/             # profil véhicule
+    planifier/            # trajet A → B : stations en chemin ou à destination (comptes)
+    destination/          # guidage du dernier tronçon, station → destination
     legal/                # confidentialité, conditions
   features/               # logique métier pure (recommendation, vehicle, trip, feedback…)
   components/             # UI partagée
@@ -79,6 +81,8 @@ cout_total       = prix_station × litres_a_acheter + cout_detour
 
 ## Vie privée (Loi 25) — non négociable
 
+- **Planification de trajet** (comptes) : départ, destination et adresse tapée vont à notre serveur puis à Mapbox pour le calcul seulement, jamais enregistrés ni journalisés ; la destination est gardée sur l'appareil (`src/lib/planned-trip.ts`, 12 h), jamais dans une URL ni en base.
+- **Recherche** : villes et codes postaux cherchés sur l'appareil ; une adresse (numéro ou nom de rue) part à notre serveur puis à Mapbox, sans être enregistrée ni journalisée (mention « Adresses : © Mapbox » dans les suggestions).
 - **Sans compte** : la carte affiche toutes les stations et leurs prix dès l'ouverture (aucune demande de position au chargement) ; après une position ou une adresse, la liste montre les stations du rayon, triées par prix au litre, avec une invitation « Calculer mon plein » vers `/compte`. **Calculer le plein** (véhicule, coût total, détours par la route) est réservé aux comptes (décision du propriétaire, 2026-11-11). Le compte sert aussi à : « J'y vais », retours, historique.
 - Localisation demandée par le navigateur seulement au moment où elle sert ; le site reste utilisable avec une adresse saisie.
 - Bannière de témoins : aucun témoin ou script d'analyse non essentiel avant consentement. Aujourd'hui il n'y en a aucun : `StorageNotice` informe seulement (stockage essentiel). Tout outil non essentiel ajouté doit rester désactivé tant qu'un vrai choix « Accepter / Refuser » n'a pas été fait, et être listé dans la politique (section `temoins`).
@@ -124,7 +128,8 @@ Dans `.env.local` (jamais commité) : `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_S
 ## Sécurité
 
 - Toute route API qui appelle un service payant passe d'abord par `rateLimited()` (`src/lib/api-limits.ts`) : limite par adresse et par instance, réponse 429.
-- `/api/detours` (calcul du plein) exige une session : `signedInUser()` (`src/lib/api-auth.ts`) vérifie le jeton Supabase envoyé par le navigateur, sinon 401. Le blocage dans l'interface ne suffit jamais seul.
+- `/api/adresses` (géocodage Mapbox des adresses) est ouvert sans compte (décision du 2026-11-15) : seules ses limites de requêtes plafonnent la facture, et le navigateur ne l'appelle que pour un texte qui ressemble à une rue (`looksLikeStreetAddress`) ou qu'aucune ville / aucun code postal ne trouve.
+- `/api/detours` (calcul du plein), `/api/parcours` et `/api/parcours/detours` (planification de trajet) exigent une session : `signedInUser()` (`src/lib/api-auth.ts`) vérifie le jeton Supabase envoyé par le navigateur (côté client : `postSignedIn`, `src/lib/signed-in-fetch.ts`), sinon 401. `/api/itineraire` reste ouvert vers une station (id cherché en base) ; une destination libre (dernier tronçon d'un trajet planifié) exige une session. Le blocage dans l'interface ne suffit jamais seul.
 - Connexion : Supabase exige un jeton Turnstile (`[auth.captcha]`) ; le script Cloudflare n'est chargé que sur `/compte`, jamais sur la carte.
 - Content-Security-Policy construite par `src/features/security/csp.ts` (production seulement) : tout nouveau service contacté par le navigateur doit y être ajouté, sinon `e2e/securite.spec.ts` échoue.
 - Écritures des utilisateurs : privilèges par colonne. Le navigateur n'envoie que les champs saisis (trajet : `station_id, fuel, mode` ; retour : `trip_id, filled, fuel, price_paid` ; consentement : `kind, granted, document_version` ; fin de trajet : `status`). Identifiants, propriétaire, dates et prix viennent de la base. Toute nouvelle table utilisateur suit la même règle (`grant insert (colonnes…)`), avec un test pgTAP qui tente d'antidater une ligne.

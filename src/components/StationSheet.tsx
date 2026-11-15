@@ -9,10 +9,12 @@ interface StationSheetProps {
   station: Station;
   fuel: FuelType;
   onClose: () => void;
+  /** Called on "J'y vais", just before leaving for the trip screen */
+  onGo?: () => void;
 }
 
 /** Station details: bottom sheet on phones, card at the top right (beside the zoom buttons) on wider screens. */
-export function StationSheet({ station, fuel, onClose }: StationSheetProps) {
+export function StationSheet({ station, fuel, onClose, onGo }: StationSheetProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   // Move keyboard / screen-reader focus to the newly opened station.
@@ -82,6 +84,7 @@ export function StationSheet({ station, fuel, onClose }: StationSheetProps) {
 
       <Link
         href={`/trajet/${station.id}?carburant=${fuelToParam(fuel)}`}
+        onClick={onGo}
         className="mt-4 flex min-h-12 items-center justify-center rounded-2xl bg-blue-700 text-lg font-semibold text-white hover:bg-blue-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
       >
         {t.station.go}

@@ -1,5 +1,6 @@
 import type { LatLng } from "@/features/geo/geo";
 import type { Route } from "@/features/routing/directions";
+import { postSignedIn } from "@/lib/signed-in-fetch";
 
 /**
  * Route to a station through our API route (the Mapbox token stays on the server).
@@ -19,4 +20,17 @@ export async function fetchTripRoute(origin: LatLng, stationId: string, heading?
   } catch {
     return null;
   }
+}
+
+/**
+ * Last leg of a planned trip: from here to the user's destination (after the
+ * fill-up). Account-only on the server, so the session token goes along.
+ */
+export async function fetchDestinationRoute(origin: LatLng, destination: LatLng, heading?: number): Promise<Route | null> {
+  const answer = await postSignedIn<{ route: Route }>("/api/itineraire", {
+    origin: { lat: origin.lat, lng: origin.lng },
+    destination: { lat: destination.lat, lng: destination.lng },
+    heading,
+  });
+  return answer?.route ?? null;
 }

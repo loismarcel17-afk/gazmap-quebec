@@ -87,6 +87,7 @@ describe("AccountSettings", () => {
     termsEverAccepted: true,
     statistics: true,
     statisticsChangedAt: "2026-10-28T20:05:00Z",
+    statisticsOutdated: false,
   };
 
   it("shows when the terms were accepted, and lets the user withdraw statistics", async () => {
@@ -100,6 +101,24 @@ describe("AccountSettings", () => {
     expect(toggle.getAttribute("aria-checked")).toBe("true");
     fireEvent.click(toggle);
     await waitFor(() => expect(onStatisticsChange).toHaveBeenCalledWith(false));
+  });
+
+  it("asks a user who said yes to the old text to say yes again, showing the new text", async () => {
+    const onStatisticsChange = vi.fn(async () => {});
+    render(
+      <AccountSettings
+        email="alice@example.com"
+        consents={{ ...consents, statistics: false, statisticsOutdated: true }}
+        onStatisticsChange={onStatisticsChange}
+        onSignOut={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/le texte de ce consentement a changé/)).toBeDefined();
+    expect(screen.getByText(/peuvent être vendues ou communiquées à des tiers/)).toBeDefined();
+    const toggle = screen.getByRole("switch", { name: "Contribuer anonymement aux statistiques" });
+    expect(toggle.getAttribute("aria-checked")).toBe("false");
+    fireEvent.click(toggle);
+    await waitFor(() => expect(onStatisticsChange).toHaveBeenCalledWith(true));
   });
 
   it("says when saving the change failed", async () => {

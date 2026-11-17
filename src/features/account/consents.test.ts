@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { initialConsentRows, normalizeEmail, summarizeConsents, TERMS_VERSION, type ConsentState } from "./consents";
+import {
+  initialConsentRows,
+  normalizeEmail,
+  STATISTICS_VERSION,
+  summarizeConsents,
+  TERMS_VERSION,
+  type ConsentState,
+} from "./consents";
 
 const terms = (granted: boolean, version: string = TERMS_VERSION): ConsentState => ({
   kind: "terms",
@@ -7,10 +14,10 @@ const terms = (granted: boolean, version: string = TERMS_VERSION): ConsentState 
   documentVersion: version,
   createdAt: "2026-10-28T20:00:00Z",
 });
-const statistics = (granted: boolean): ConsentState => ({
+const statistics = (granted: boolean, version: string | null = STATISTICS_VERSION): ConsentState => ({
   kind: "statistics",
   granted,
-  documentVersion: null,
+  documentVersion: version,
   createdAt: "2026-10-28T20:05:00Z",
 });
 
@@ -22,6 +29,7 @@ describe("summarizeConsents", () => {
       termsEverAccepted: false,
       statistics: false,
       statisticsChangedAt: null,
+      statisticsOutdated: false,
     });
   });
 
@@ -32,6 +40,7 @@ describe("summarizeConsents", () => {
       termsEverAccepted: true,
       statistics: true,
       statisticsChangedAt: "2026-10-28T20:05:00Z",
+      statisticsOutdated: false,
     });
   });
 
@@ -44,13 +53,21 @@ describe("summarizeConsents", () => {
   it("treats a withdrawn statistics consent as off", () => {
     expect(summarizeConsents([terms(true), statistics(false)]).statistics).toBe(false);
   });
+
+  it("treats a yes to an older statistics text as off, and says so", () => {
+    // Before 2026-11-16 the text didn't announce a sale: no version was recorded.
+    const summary = summarizeConsents([terms(true), statistics(true, null)]);
+    expect(summary.statistics).toBe(false);
+    expect(summary.statisticsOutdated).toBe(true);
+    expect(summarizeConsents([terms(true), statistics(false, null)]).statisticsOutdated).toBe(false);
+  });
 });
 
 describe("initialConsentRows", () => {
   it("records both consents separately, statistics as chosen", () => {
     expect(initialConsentRows(false)).toEqual([
       { kind: "terms", granted: true, document_version: TERMS_VERSION },
-      { kind: "statistics", granted: false, document_version: null },
+      { kind: "statistics", granted: false, document_version: STATISTICS_VERSION },
     ]);
     expect(initialConsentRows(true)[1].granted).toBe(true);
   });

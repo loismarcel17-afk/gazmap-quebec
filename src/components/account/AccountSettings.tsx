@@ -32,9 +32,11 @@ export function AccountSettings({ email, consents, onStatisticsChange, onSignOut
 
   const statisticsStatus = consents.statistics
     ? interpolate(t.account.settings.statisticsOn, { date: formatDateTime(consents.statisticsChangedAt!) })
-    : consents.statisticsChangedAt
-      ? interpolate(t.account.settings.statisticsOffSince, { date: formatDateTime(consents.statisticsChangedAt) })
-      : t.account.settings.statisticsOff;
+    : consents.statisticsOutdated
+      ? t.account.settings.statisticsOutdated
+      : consents.statisticsChangedAt
+        ? interpolate(t.account.settings.statisticsOffSince, { date: formatDateTime(consents.statisticsChangedAt) })
+        : t.account.settings.statisticsOff;
 
   return (
     <div className="flex flex-col gap-6">
@@ -58,6 +60,7 @@ export function AccountSettings({ email, consents, onStatisticsChange, onSignOut
             <p className="text-sm text-zinc-700" aria-live="polite">
               {statisticsStatus}
             </p>
+            <p className="mt-1 text-sm text-zinc-600">{t.account.consent.statisticsHelp}</p>
           </div>
           {/* A switch: role="switch" + aria-checked tell screen readers it's on/off. */}
           <button

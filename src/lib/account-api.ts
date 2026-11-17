@@ -1,4 +1,4 @@
-import { initialConsentRows, type ConsentKind, type ConsentState } from "@/features/account/consents";
+import { initialConsentRows, STATISTICS_VERSION, type ConsentKind, type ConsentState } from "@/features/account/consents";
 import { clearTrip } from "./navigation/trip-storage";
 import { supabase } from "./supabase";
 
@@ -72,8 +72,8 @@ export async function acceptTerms(contributeToStatistics: boolean): Promise<void
   if (error) throw error;
 }
 
-/** Settings: grant or withdraw the statistics consent (a new timestamped row). */
+/** Settings: grant or withdraw the statistics consent (a new timestamped row, with the text version shown). */
 export async function setStatisticsConsent(granted: boolean): Promise<void> {
-  const { error } = await supabase.from("consents").insert({ kind: "statistics", granted });
+  const { error } = await supabase.from("consents").insert({ kind: "statistics", granted, document_version: STATISTICS_VERSION });
   if (error) throw error;
 }

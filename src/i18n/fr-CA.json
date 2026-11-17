@@ -266,7 +266,7 @@
       "termsLink": "conditions d'utilisation",
       "termsRequired": "Vous devez accepter les conditions d'utilisation pour créer un compte.",
       "statistics": "Contribuer anonymement aux statistiques",
-      "statisticsHelp": "Facultatif. Les prix que vous confirmez et vos trajets (région de la station, mois, plein fait ou non) servent, une fois regroupés avec ceux d'au moins 20 personnes, à des statistiques sur le prix de l'essence. Jamais vos données individuelles. Vous pourrez changer d'avis à tout moment.",
+      "statisticsHelp": "Facultatif. Les prix que vous confirmez et vos trajets (région de la station, mois, plein fait ou non) sont regroupés avec ceux d'au moins 20 personnes pour produire des statistiques sur le prix de l'essence. Ces statistiques peuvent être vendues ou communiquées à des tiers (entreprises, chercheurs, médias, organismes publics). Vos données individuelles, elles, ne sont jamais vendues ni communiquées. Vous pourrez changer d'avis à tout moment.",
       "privacy": "Voir la {link}.",
       "privacyLink": "politique de confidentialité",
       "continue": "Continuer",
@@ -283,6 +283,7 @@
       "statisticsOn": "Activé depuis le {date}.",
       "statisticsOff": "Désactivé.",
       "statisticsOffSince": "Désactivé depuis le {date}.",
+      "statisticsOutdated": "Désactivé : le texte de ce consentement a changé. Réactivez-le si vous acceptez le nouveau texte ci-dessous.",
       "statisticsError": "Impossible d'enregistrer ce changement. Réessayez.",
       "signOut": "Se déconnecter",
       "deleteTitle": "Supprimer mon compte",
@@ -329,7 +330,7 @@
         {
           "title": "Vos contributions",
           "paragraphs": [
-            "Si vous y consentez, les prix que vous confirmez et vos trajets (région de la station, mois, plein fait ou non) peuvent servir, une fois regroupés avec ceux d'au moins 20 personnes, à des statistiques sur le prix de l'essence. Vos données individuelles ne sont jamais communiquées."
+            "Si vous y consentez, les prix que vous confirmez et vos trajets (région de la station, mois, plein fait ou non) peuvent servir, une fois regroupés avec ceux d'au moins 20 personnes, à des statistiques sur le prix de l'essence. Ces statistiques peuvent être vendues ou communiquées à des tiers. Vos données individuelles ne sont jamais vendues ni communiquées. Voir la politique de confidentialité, section « Statistiques »."
           ]
         },
         {
@@ -379,7 +380,11 @@
         {
           "title": "Statistiques",
           "paragraphs": [
-            "Seulement si vous y consentez : consentement facultatif, décoché par défaut et retirable à tout moment dans les réglages de votre compte. Les statistiques regroupent au moins 20 personnes par zone et par période ; elles ne contiennent jamais vos données individuelles."
+            "Seulement si vous y consentez : consentement facultatif, décoché par défaut et retirable à tout moment dans les réglages de votre compte.",
+            "Ce qui est utilisé : les prix que vous confirmez après un plein (prix payé et prix affiché) et vos trajets (région de la station, mois, carburant, mode de guidage, plein fait ou non). Jamais votre adresse courriel, votre position ni l'adresse des lieux que vous cherchez.",
+            "Comment : ces données sont regroupées par région et par mois. Un chiffre n'est produit que si au moins 20 personnes différentes y contribuent, et seulement une fois le mois terminé. Chaque personne compte pour une seule voix, quel que soit son nombre de trajets.",
+            "À qui : ces statistiques regroupées peuvent être vendues ou communiquées à des tiers, par exemple des entreprises, des chercheurs, des médias ou des organismes publics. Ils s'engagent par contrat à ne jamais tenter d'identifier qui que ce soit. Vos données individuelles ne sont jamais vendues ni communiquées.",
+            "Si vous retirez votre consentement ou supprimez votre compte, vos données ne servent plus aux statistiques produites ensuite. Les statistiques déjà produites ne peuvent pas être retirées, mais elles ne permettent pas de vous identifier."
           ]
         },
         {

@@ -4,7 +4,16 @@
  * Version of the terms of use currently in force. Changing the terms means a
  * new version here: everyone is then asked to accept again before going on.
  */
-export const TERMS_VERSION = "2026-10-28";
+export const TERMS_VERSION = "2026-11-16";
+
+/**
+ * Version of the statistics consent text. Since 2026-11-16 it says the
+ * aggregated statistics may be sold or shared with third parties. Only a
+ * "yes" given to THIS text counts (analytics.contributors checks the same
+ * value): a "yes" to an older text never covered a sale. Changing what the
+ * statistics are used for means a new version here AND in the database.
+ */
+export const STATISTICS_VERSION = "2026-11-16";
 
 export type ConsentKind = "terms" | "statistics";
 
@@ -24,9 +33,11 @@ export interface ConsentSummary {
   termsAcceptedAt: string | null;
   /** Accepted some version of the terms (now or before): an existing user */
   termsEverAccepted: boolean;
-  /** Opted in to anonymous statistics — false unless explicitly granted */
+  /** Opted in to anonymous statistics, under the CURRENT text — false unless explicitly granted */
   statistics: boolean;
   statisticsChangedAt: string | null;
+  /** Said yes to an older statistics text: no longer counted until they say yes again */
+  statisticsOutdated: boolean;
 }
 
 export function summarizeConsents(states: ConsentState[]): ConsentSummary {
@@ -37,9 +48,10 @@ export function summarizeConsents(states: ConsentState[]): ConsentSummary {
     termsAccepted,
     termsAcceptedAt: termsAccepted ? terms.createdAt : null,
     termsEverAccepted: terms?.granted === true,
-    // Never assumed: no row means no consent.
-    statistics: statistics?.granted === true,
+    // Never assumed: no row means no consent, and a yes to an older text isn't a yes to this one.
+    statistics: statistics?.granted === true && statistics.documentVersion === STATISTICS_VERSION,
     statisticsChangedAt: statistics?.createdAt ?? null,
+    statisticsOutdated: statistics?.granted === true && statistics.documentVersion !== STATISTICS_VERSION,
   };
 }
 
@@ -47,7 +59,7 @@ export function summarizeConsents(states: ConsentState[]): ConsentSummary {
 export function initialConsentRows(contributeToStatistics: boolean) {
   return [
     { kind: "terms" as const, granted: true, document_version: TERMS_VERSION },
-    { kind: "statistics" as const, granted: contributeToStatistics, document_version: null },
+    { kind: "statistics" as const, granted: contributeToStatistics, document_version: STATISTICS_VERSION },
   ];
 }
 

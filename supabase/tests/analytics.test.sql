@@ -3,7 +3,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(12);
+select plan(14);
 
 -- Last month (finished) and this month (in progress), in Québec time.
 create temp table months as
@@ -17,14 +17,14 @@ insert into public.stations (id, address, region, postal_code, lat, lng, price_r
   ('st-estrie', '1 rue A, Sherbrooke', 'Estrie', 'J1H 1A1', 45.40, -71.89, 1800, now()),
   ('st-outaouais', '1 rue B, Gatineau', 'Outaouais', 'J8X 1A1', 45.48, -75.70, 1800, now());
 
--- 30 users: 1–20 consent to statistics, 21–25 only accepted the terms,
--- 26–30 consented then withdrew.
+-- 30 users: 1–20 consent to statistics (current text, 2026-11-16), 21–25 only
+-- accepted the terms, 26–30 consented then withdrew.
 insert into auth.users (id, email)
 select ('00000000-0000-0000-0000-' || lpad(n::text, 12, '0'))::uuid, 'user' || n || '@example.com'
   from generate_series(1, 30) as n;
 insert into public.consents (user_id, kind, granted, document_version, created_at)
 select ('00000000-0000-0000-0000-' || lpad(n::text, 12, '0'))::uuid, kind, true,
-       case kind when 'terms' then '2026-10-28' end, now() - interval '90 days'
+       '2026-11-16', now() - interval '90 days'
   from generate_series(1, 30) as n, unnest(array['terms', 'statistics']) as kind
  where kind = 'terms' or n <= 20 or n > 25;
 insert into public.consents (user_id, kind, granted, created_at)
@@ -146,10 +146,29 @@ select is_empty(
   'one withdrawal brings Estrie under 20: the cell disappears'
 );
 
--- So does a deleted account.
+-- A "yes" to the old text (no version: it didn't announce a sale) doesn't count.
 reset role;
 insert into public.consents (user_id, kind, granted)
 values ('00000000-0000-0000-0000-000000000001', 'statistics', true);
+set local role analytics_reader;
+select is_empty(
+  $$select 1 from analytics.fill_up_prices$$,
+  'a yes to the old statistics text (before the sale was announced) is not counted'
+);
+
+-- A yes to the current text counts again.
+reset role;
+insert into public.consents (user_id, kind, granted, document_version)
+values ('00000000-0000-0000-0000-000000000001', 'statistics', true, '2026-11-16');
+set local role analytics_reader;
+select is(
+  (select contributors from analytics.fill_up_prices),
+  20,
+  'a yes to the current text brings the user back into the figures'
+);
+
+-- So does a deleted account.
+reset role;
 delete from auth.users where id = '00000000-0000-0000-0000-000000000002';
 set local role analytics_reader;
 select is_empty(

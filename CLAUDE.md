@@ -92,6 +92,7 @@ cout_total       = prix_station × litres_a_acheter + cout_detour
 - Aucune position de trajet n'est stockée (on garde station, date, carburant, prix). Purge quotidienne `pg_cron` : comptes sans conditions acceptées après **30 jours** et journaux Auth des comptes supprimés.
 - RLS activée sur **toutes** les tables utilisateur ; aucune clé `service_role` côté navigateur.
 - Données vendables dans un schéma séparé `analytics`, alimenté seulement par des vues agrégées avec **seuil minimal de 20 utilisateurs distincts** par cellule (zone × période). Aucun export direct des tables utilisateur. Implémenté dans `supabase/migrations/*_analytics.sql` : toute nouvelle vue y reprend la jointure sur `analytics.contributors`, le `having count(distinct user_id) >= 20` et le filtre « mois terminé », et n'est accordée qu'à `analytics_reader`.
+- Généralisation des statistiques vendables : temps en tranches larges (jamais l'heure exacte), aucun identifiant ; véhicule seulement en catégories ou à l'échelle ville / région, jamais modèle précis × station ; jamais le niveau exact du réservoir ni le montant d'une facture (tranches ou volumes moyens). Toute nouvelle vue ou export est inscrit dans le registre d'anonymisation `docs/REGISTRE-ANONYMISATION.md` (analyse de risque individualisation / corrélation / inférence, réévaluée chaque année).
 - Factures (phase 2) lues dans le navigateur ; l'image n'est jamais envoyée au serveur.
 - Concevoir comme si une app iOS/Android devait suivre : pas de transmission de localisation individuelle à des tiers.
 

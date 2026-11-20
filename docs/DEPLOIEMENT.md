@@ -110,6 +110,8 @@ reset role;
 
 Conservez le fichier exporté et ne refaites pas d'exports du même mois : comparer deux lectures avant et après le retrait d'un consentement pourrait isoler la contribution d'une personne. Pour donner un accès direct à un acheteur, créez-lui un utilisateur Postgres membre de `analytics_reader`, jamais une clé Supabase.
 
+Avant chaque export ou accès donné : inscrire l'événement dans le journal de `docs/REGISTRE-ANONYMISATION.md` (section 7) et vérifier que l'analyse de risque date de moins de 12 mois.
+
 ## 3. Netlify
 
 ### 3.1 Importer le dépôt
